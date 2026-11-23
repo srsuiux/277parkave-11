@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { glassShow, glassHide } from './ui/glass.js';
 import { KITCHEN as K, BATHROOM as BATH, BEDROOM as BED } from './config.js';
 
 /**
@@ -120,10 +121,10 @@ export function initLayout({ scene, camera, renderer, roots, fb, wallPaints = []
 
   // ---------- UI: small help card (bottom-left) + floating toolbar on the selected object ----------
   const css = (el, t) => { el.style.cssText = t; return el; };
-  const BTN = 'padding:5px 9px;border:1px solid #555;border-radius:6px;background:#2a2a2e;color:#fff;cursor:pointer;font:12px system-ui';
-  const card = css(document.createElement('div'), 'position:fixed;left:12px;bottom:12px;width:285px;background:rgba(15,15,18,.92);border:1px solid #333;border-radius:10px;padding:12px;display:none;flex-direction:column;gap:8px;font:12px/1.5 system-ui;color:#ddd;z-index:20');
+  const BTN = '';
+  const card = css(document.createElement('div'), 'left:16px;bottom:70px;width:300px;display:none;flex-direction:column;gap:10px;z-index:20'); card.className = 'g-glass g-strong g-pad';
   card.innerHTML = `
-    <div style="font-size:14px;font-weight:600">Layout mode <span style="font-weight:400;color:#888">· press L to exit</span></div>
+    <div class="g-title" style="font-size:15px">Layout mode <span class="g-faint" style="font-weight:400;font-size:12px">· press L to exit</span></div>
     <div><b>1.</b> Click an object &nbsp; <b>2.</b> drag it to move<br><b>3.</b> drag the dots on it to resize or turn it:</div>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 8px">
       <span style="color:#ffb020">●</span><span>orange = width</span>
@@ -131,40 +132,40 @@ export function initLayout({ scene, camera, renderer, roots, fb, wallPaints = []
       <span style="color:#3ddc84">●</span><span>green = height</span>
       <span style="color:#c07cff">●</span><span>purple = rotate</span>
     </div>
-    <div style="color:#9aa">Objects snap flush to walls and each other, and can't overlap.<br>Walk with WASD · right-drag to look around.</div>
-    <div style="display:flex;gap:6px"><button id="ly-save" style="${BTN};background:#1f6feb">Save layout</button><button id="ly-resetall" style="${BTN}">Reset all</button><button id="ly-exit" style="${BTN}">Exit</button></div>
-    <div style="display:flex;gap:6px"><button id="ly-undo" style="${BTN}" title="Undo the last Reset all / Revert">↩ Undo</button><button id="ly-revert" style="${BTN}" title="Reload the last SAVED layout (throws away unsaved changes)">Revert to saved</button></div>
-    <div id="ly-status" style="color:#9aa;min-height:16px"></div>
-    <details><summary style="cursor:pointer;color:#9ab">Type exact numbers…</summary>
-      <select id="ly-pick" style="width:100%;margin:6px 0;padding:4px;background:#222;color:#eee;border:1px solid #444"></select>
+    <div class="g-sub g-small">Objects snap flush to walls and each other, and can't overlap.<br>Walk with WASD · right-drag to look around.</div>
+    <div style="display:flex;gap:6px"><button id="ly-save" class="primary">Save layout</button><button id="ly-resetall" >Reset all</button><button id="ly-exit" >Exit</button></div>
+    <div style="display:flex;gap:6px"><button id="ly-undo"  title="Undo the last Reset all / Revert">↩ Undo</button><button id="ly-revert"  title="Reload the last SAVED layout (throws away unsaved changes)">Revert to saved</button></div>
+    <div id="ly-status" class="g-ok g-small" style="min-height:16px"></div>
+    <details><summary>Type exact numbers…</summary>
+      <select id="ly-pick" style="width:100%;margin:8px 0"></select>
       <div id="ly-fields" style="display:grid;grid-template-columns:80px 1fr;gap:4px 8px;align-items:center"></div>
     </details>`;
   document.body.appendChild(card);
   const $ = (id) => card.querySelector('#' + id);
   const FIELDS = [['x', 'x (m)'], ['y', 'height off floor'], ['z', 'z (m)'], ['rot', 'rotate °'], ['sx', 'width ×'], ['sy', 'height ×'], ['sz', 'depth ×']];
-  $('ly-fields').innerHTML = FIELDS.map(([k, l]) => `<label>${l}</label><input data-k="${k}" type="number" step="${k.startsWith('s') ? 0.05 : k === 'rot' ? 5 : 0.01}" style="width:100%;box-sizing:border-box;background:#222;color:#eee;border:1px solid #444;padding:3px">`).join('');
+  $('ly-fields').innerHTML = FIELDS.map(([k, l]) => `<label>${l}</label><input data-k="${k}" type="number" step="${k.startsWith('s') ? 0.05 : k === 'rot' ? 5 : 0.01}" style="width:100%;padding:4px 8px">`).join('');
   $('ly-pick').innerHTML = '<option value="">— pick an object —</option>' + movables.map((o, i) => `<option value="${i}">${o.userData.label ?? o.name}</option>`).join('');
 
-  const bar = css(document.createElement('div'), 'position:fixed;display:none;z-index:21;transform:translate(-50%,-100%);background:rgba(15,15,18,.94);border:1px solid #444;border-radius:10px;padding:6px 8px;gap:6px;align-items:center;font:12px system-ui;color:#eee;white-space:nowrap');
-  bar.innerHTML = `<span id="tb-name" style="color:#7dd3fc;max-width:210px;overflow:hidden;text-overflow:ellipsis"></span><span id="tb-dim" style="color:#9aa"></span>
-    <button id="tb-l" title="Rotate 90° left" style="${BTN}">⟲ 90°</button><button id="tb-r" title="Rotate 90° right" style="${BTN}">⟳ 90°</button>
-    <button id="tb-reset" title="Put this object back where it started" style="${BTN}">Reset</button><button id="tb-done" title="Deselect" style="${BTN}">✕</button>`;
+  const bar = css(document.createElement('div'), 'display:none;z-index:21;transform:translate(-50%,-100%);gap:8px;align-items:center;white-space:nowrap;padding:7px 10px;animation:none'); bar.className = 'g-glass g-strong g-row';
+  bar.innerHTML = `<span id="tb-name" class="g-head" style="max-width:210px;overflow:hidden;text-overflow:ellipsis"></span><span id="tb-dim" class="g-sub g-small"></span>
+    <button id="tb-l" title="Rotate 90° left" >⟲ 90°</button><button id="tb-r" title="Rotate 90° right" >⟳ 90°</button>
+    <button id="tb-reset" title="Put this object back where it started" >Reset</button><button id="tb-done" title="Deselect" >✕</button>`;
   document.body.appendChild(bar);
-  const tip = css(document.createElement('div'), 'position:fixed;display:none;z-index:22;pointer-events:none;background:rgba(0,0,0,.8);color:#fff;font:12px system-ui;padding:3px 8px;border-radius:6px');
+  const tip = css(document.createElement('div'), 'display:none'); tip.className = 'g-tip';
   document.body.appendChild(tip);
   const $b = (id) => bar.querySelector('#' + id);
 
   // ---------- sidebar: every object, with show / hide toggles ----------
-  const side = css(document.createElement('div'), 'position:fixed;top:80px;right:12px;width:290px;max-height:calc(100vh - 100px);display:none;flex-direction:column;background:rgba(15,15,18,.92);border:1px solid #333;border-radius:10px;font:12px system-ui;color:#ddd;z-index:20;overflow:hidden');
-  side.innerHTML = `<div style="padding:10px 12px;border-bottom:1px solid #333;display:flex;align-items:center;gap:6px"><b style="font-size:13px">Objects</b><span id="sd-count" style="color:#9aa;white-space:nowrap;font-size:11px"></span><span style="flex:1"></span><button id="sd-all" style="${BTN};padding:3px 6px;white-space:nowrap;font-size:11px">Show all</button><button id="sd-none" style="${BTN};padding:3px 6px;white-space:nowrap;font-size:11px">Hide all</button></div><div id="sd-list" style="overflow:auto;padding:4px 6px"></div>
-    <div style="padding:6px 12px;border-top:1px solid #333;color:#9aa">Tick = in the room. Untick = removed (also no collision).</div>`;
+  const side = css(document.createElement('div'), 'top:84px;right:16px;width:300px;max-height:calc(100vh - 110px);display:none;flex-direction:column;z-index:20;overflow:hidden'); side.className = 'g-glass g-strong';
+  side.innerHTML = `<div class="g-row" style="padding:12px 14px;border-bottom:1px solid var(--g-border-soft)"><b class="g-head">Objects</b><span id="sd-count" class="g-sub g-small" style="white-space:nowrap"></span><span style="flex:1"></span><button id="sd-all" class="sm">Show all</button><button id="sd-none" class="sm">Hide all</button></div><div id="sd-list" style="overflow:auto;padding:6px 8px"></div>
+    <div class="g-sub g-small" style="padding:8px 14px;border-top:1px solid var(--g-border-soft)">Tick = in the room. Untick = removed (also no collision).</div>`;
   side.addEventListener('pointerdown', (e) => e.stopPropagation());
   document.body.appendChild(side);
   function renderList() {
     const list = side.querySelector('#sd-list');
     list.innerHTML = '';
     for (const o of movables) {
-      const row = css(document.createElement('div'), `display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;${state.sel === o ? 'background:#1d3a4a;' : ''}${o.visible ? '' : 'opacity:.5;'}`);
+      const row = document.createElement('div'); row.className = 'g-item' + (state.sel === o ? ' on' : '') + (o.visible ? '' : ' off');
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = o.visible; cb.title = o.visible ? 'Remove from room' : 'Add to room';
       cb.onclick = (e) => { e.stopPropagation(); setVisible(o, cb.checked); };
       const name = document.createElement('span'); name.textContent = o.userData.label ?? o.name; name.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
@@ -453,7 +454,7 @@ export function initLayout({ scene, camera, renderer, roots, fb, wallPaints = []
     if (next === state.on) return;
     if (next && fb.state.edit) fb.toggle(false);
     state.on = next;
-    card.style.display = next ? 'flex' : 'none'; side.style.display = next ? 'flex' : 'none';
+    for (const el of [card, side]) next ? glassShow(el, 'flex') : glassHide(el);
     document.getElementById('dot').style.display = next ? 'none' : '';
     cv.style.cursor = '';
     if (next) onEnter?.(); else { select(null); tip.style.display = 'none'; onExit?.(); }
@@ -461,7 +462,7 @@ export function initLayout({ scene, camera, renderer, roots, fb, wallPaints = []
 
   const btn = document.createElement('button');
   btn.innerHTML = '⤧ Layout mode <kbd>L</kbd>';
-  btn.style.cssText = 'position:fixed;top:44px;right:12px;z-index:19;padding:5px 9px;border:1px solid #444;border-radius:6px;background:rgba(20,20,24,.8);color:#ddd;font:12px system-ui;cursor:pointer';
+  btn.className = 'g-glass g-pill'; btn.style.cssText = 'top:56px;right:16px;z-index:19;padding:5px 14px;cursor:pointer;font:500 12px var(--g-font);animation:none';
   btn.onclick = () => toggle();
   document.body.appendChild(btn);
 

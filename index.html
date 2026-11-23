@@ -5,27 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apartment</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 14px system-ui, sans-serif; color: #eee; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-size: 14px; }
     canvas { display: block; }
-    #start { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; gap: 10px;
-             background: rgba(0,0,0,.55); cursor: pointer; }
-    #start h1 { margin: 0; font-weight: 500; font-size: 22px; }
-    #start p { margin: 0; color: #bbb; line-height: 1.7; }
-    kbd { background: #2b2b2b; border: 1px solid #555; border-radius: 4px; padding: 1px 6px; }
-    #dot { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%;
-           background: rgba(255,255,255,.7); pointer-events: none; }
-    #prompt { position: fixed; left: 50%; top: 56%; transform: translateX(-50%); padding: 4px 10px; border-radius: 6px;
-              background: rgba(0,0,0,.55); pointer-events: none; opacity: 0; transition: opacity .15s; }
+    #start { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; cursor: pointer; }
+    #start h1 { margin: 0 0 8px; }
+    #start p { margin: 0; line-height: 1.9; }
+    #dot { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; pointer-events: none; }
+    #prompt { opacity: 0; pointer-events: none; z-index: 12; }
   </style>
 </head>
 <body>
   <div id="dot"></div>
-  <div id="prompt"><kbd>E</kbd> open / close door</div>
+  <div id="prompt" class="g-glass g-pill"><kbd>E</kbd> open / close door</div>
   <div id="start">
+   <div class="g-glass g-strong">
     <h1>Click to step inside</h1>
     <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &nbsp; <kbd>Shift</kbd> run &nbsp; mouse look<br>
-       <kbd>E</kbd> open / close doors &nbsp; <kbd>Esc</kbd> release mouse &nbsp; <kbd>K</kbd> back to the kitchen &nbsp; <kbd>R</kbd> bathroom rug on / off &nbsp; <kbd>V</kbd> third-person camera &nbsp; <kbd>Y</kbd> sit / toilet / shower &nbsp; <kbd>Q</kbd> lock bathroom door &nbsp; <kbd>T</kbd> time of day (<kbd>[</kbd> <kbd>]</kbd> &plusmn;1 h)<br>
+       <kbd>E</kbd> open / close doors &nbsp; <kbd>Esc</kbd> release mouse &nbsp; <kbd>K</kbd> back to the kitchen &nbsp; <kbd>R</kbd> bathroom rug on / off &nbsp; <kbd>Y</kbd> sit / toilet / shower &nbsp; <kbd>Q</kbd> lock bathroom door &nbsp; <kbd>G</kbd> lock / unlock the front door (your key) &nbsp; <kbd>H</kbd> hand position<br>
        arrow keys also turn your head</p>
+   </div>
   </div>
   <script type="module" src="/src/main.js"></script>
 </body>

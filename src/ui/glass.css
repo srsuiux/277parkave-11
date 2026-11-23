@@ -1,0 +1,134 @@
+/* ============================================================================================
+   Glass design system (visionOS-inspired). Every panel, dialog, pill, tooltip and control in the app
+   is built from these tokens and classes - nothing else should hard-code colours, blur or radii.
+   ============================================================================================ */
+:root {
+  /* surface */
+  --g-fill: linear-gradient(155deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 55%, rgba(255,255,255,.09));
+  --g-tint: rgba(24,27,36,.34);               /* darkens the glass a touch so text stays readable on bright rooms */
+  --g-tint-strong: rgba(18,20,28,.52);        /* modals / dense panels */
+  --g-blur: 26px; --g-blur-strong: 38px; --g-sat: 1.7;
+  --g-border: rgba(255,255,255,.2);
+  --g-border-soft: rgba(255,255,255,.1);
+  --g-hilite: inset 0 1px 0 rgba(255,255,255,.34), inset 0 -1px 0 rgba(255,255,255,.05);
+  --g-shadow-1: 0 4px 16px rgba(0,0,0,.22);
+  --g-shadow-2: 0 18px 50px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.2);
+  /* shape */
+  --g-r-lg: 26px; --g-r-md: 18px; --g-r-sm: 12px; --g-r-pill: 999px;
+  /* type */
+  --g-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
+  --g-text: rgba(255,255,255,.94); --g-text-2: rgba(255,255,255,.64); --g-text-3: rgba(255,255,255,.42);
+  --g-accent: #6aa8ff; --g-accent-fill: rgba(70,130,255,.55); --g-ok: #7be0a4; --g-warn: #ffc56b; --g-bad: #ff8d8d;
+  /* spacing + motion */
+  --g-s1: 4px; --g-s2: 8px; --g-s3: 12px; --g-s4: 16px; --g-s5: 24px;
+  --g-ease: cubic-bezier(.2,.8,.2,1); --g-fast: .14s; --g-med: .26s; --g-slow: .42s;
+}
+
+html, body { font-family: var(--g-font); color: var(--g-text); -webkit-font-smoothing: antialiased; }
+
+/* ---------- surfaces ---------- */
+.g-glass {
+  position: fixed; box-sizing: border-box; font: 13px/1.5 var(--g-font); color: var(--g-text);
+  background: var(--g-fill), var(--g-tint);
+  -webkit-backdrop-filter: blur(var(--g-blur)) saturate(var(--g-sat)); backdrop-filter: blur(var(--g-blur)) saturate(var(--g-sat));
+  border: 1px solid var(--g-border); border-radius: var(--g-r-md);
+  box-shadow: var(--g-hilite), var(--g-shadow-2);
+  animation: g-in var(--g-med) var(--g-ease) both;
+}
+.g-glass.g-strong { background: var(--g-fill), var(--g-tint-strong); -webkit-backdrop-filter: blur(var(--g-blur-strong)) saturate(var(--g-sat)); backdrop-filter: blur(var(--g-blur-strong)) saturate(var(--g-sat)); }
+.g-glass.g-pill { border-radius: var(--g-r-pill); padding: 7px 16px; box-shadow: var(--g-hilite), var(--g-shadow-1); }
+.g-glass.g-pad { padding: var(--g-s4); }
+.g-glass.g-lg { border-radius: var(--g-r-lg); }
+.g-glass.g-static { position: static; animation: none; }   /* nested glass, e.g. cards inside a modal */
+.g-glass.g-out, .g-scrim.g-out { animation: g-out var(--g-fast) ease-in both; pointer-events: none; }
+.g-glass.g-inline { position: relative; }
+
+.g-scrim {
+  position: fixed; inset: 0; z-index: 60; display: none; place-items: center; font: 13px/1.5 var(--g-font); color: var(--g-text);
+  background: radial-gradient(ellipse at 50% 40%, rgba(10,12,20,.18), rgba(5,6,12,.5));
+  -webkit-backdrop-filter: blur(6px) saturate(1.2); backdrop-filter: blur(6px) saturate(1.2);
+  animation: g-fade var(--g-med) ease both;
+}
+.g-scrim > .g-glass { position: relative; animation: g-pop var(--g-slow) var(--g-ease) both; }
+
+@keyframes g-in   { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes g-pop  { from { opacity: 0; transform: translateY(14px) scale(.965); } to { opacity: 1; transform: none; } }
+@keyframes g-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes g-out  { to { opacity: 0; transform: translateY(6px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .g-glass, .g-scrim, .g-scrim > .g-glass { animation: none !important; } }
+
+/* ---------- type ---------- */
+.g-title { font-size: 17px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+.g-head  { font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+.g-sub, .g-muted { color: var(--g-text-2); }
+.g-faint { color: var(--g-text-3); }
+.g-ok { color: var(--g-ok); } .g-warn { color: var(--g-warn); } .g-bad { color: var(--g-bad); }
+.g-small { font-size: 11.5px; }
+.g-sep { height: 1px; background: var(--g-border-soft); margin: var(--g-s2) 0; border: 0; }
+.g-row { display: flex; align-items: center; gap: var(--g-s2); }
+.g-col { display: flex; flex-direction: column; gap: var(--g-s2); }
+.g-grow { flex: 1; min-width: 0; }
+
+/* ---------- controls (apply to anything inside a glass surface) ---------- */
+.g-glass button, .g-scrim button, .g-btn {
+  font: 500 13px var(--g-font); color: var(--g-text); cursor: pointer;
+  padding: 7px 14px; border-radius: var(--g-r-pill);
+  background: rgba(255,255,255,.12); border: 1px solid var(--g-border-soft);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+  transition: background var(--g-fast) var(--g-ease), transform var(--g-fast) var(--g-ease), border-color var(--g-fast) var(--g-ease), box-shadow var(--g-fast);
+}
+.g-glass button:hover, .g-scrim button:hover, .g-btn:hover { background: rgba(255,255,255,.22); border-color: var(--g-border); }
+.g-glass button:active, .g-scrim button:active, .g-btn:active { transform: scale(.96); background: rgba(255,255,255,.28); }
+.g-glass button:focus-visible, .g-scrim button:focus-visible, .g-glass input:focus-visible, .g-glass select:focus-visible, .g-glass textarea:focus-visible,
+.g-scrim input:focus-visible { outline: 2px solid var(--g-accent); outline-offset: 2px; }
+.g-glass button.primary, .g-scrim button.primary { background: var(--g-accent-fill); border-color: rgba(140,180,255,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px rgba(60,110,255,.3); }
+.g-glass button.primary:hover, .g-scrim button.primary:hover { background: rgba(90,150,255,.7); }
+.g-glass button.danger:hover, .g-scrim button.danger:hover { background: rgba(255,90,90,.4); }
+.g-glass button.sm, .g-scrim button.sm { padding: 3px 10px; font-size: 11.5px; }
+.g-glass button.on, .g-scrim button.on { background: rgba(255,255,255,.9); color: #14161c; border-color: transparent; }
+.g-glass button:disabled { opacity: .4; pointer-events: none; }
+
+.g-glass input:not([type=checkbox]):not([type=color]):not([type=file]), .g-glass select, .g-glass textarea, .g-scrim input:not([type=checkbox]):not([type=color]):not([type=file]) {
+  font: 13px var(--g-font); color: var(--g-text); box-sizing: border-box; padding: 7px 12px; border-radius: var(--g-r-sm);
+  background: rgba(0,0,0,.22); border: 1px solid var(--g-border-soft); box-shadow: inset 0 1px 3px rgba(0,0,0,.25);
+  transition: border-color var(--g-fast), background var(--g-fast);
+}
+.g-glass input::placeholder, .g-glass textarea::placeholder, .g-scrim input::placeholder { color: var(--g-text-3); }
+.g-glass input:focus, .g-glass select:focus, .g-glass textarea:focus, .g-scrim input:focus { border-color: rgba(140,180,255,.7); background: rgba(0,0,0,.3); outline: none; }
+.g-glass select option { background: #1c1f28; color: #fff; }
+.g-glass input[type=checkbox] { accent-color: #8ab8ff; width: 15px; height: 15px; }
+.g-glass input[type=color], .g-scrim input[type=color] { width: 44px; height: 28px; padding: 0; border: 1px solid var(--g-border); border-radius: var(--g-r-pill); background: none; cursor: pointer; overflow: hidden; }
+.g-glass kbd, .g-scrim kbd, kbd.g-kbd {
+  font: 600 11px var(--g-font); color: var(--g-text); padding: 1px 7px; border-radius: 7px; margin: 0 1px;
+  background: rgba(255,255,255,.14); border: 1px solid var(--g-border-soft); box-shadow: inset 0 -1px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.g-glass details > summary { cursor: pointer; color: var(--g-text-2); list-style: none; padding: 2px 0; }
+.g-glass details > summary::-webkit-details-marker { display: none; }
+.g-glass details > summary::before { content: '›'; display: inline-block; margin-right: 6px; transition: transform var(--g-fast); }
+.g-glass details[open] > summary::before { transform: rotate(90deg); }
+.g-glass ::-webkit-scrollbar { width: 8px; } .g-glass ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+
+/* segmented control (hand position, etc.) */
+.g-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--g-r-pill); background: rgba(0,0,0,.2); }
+.g-seg button { padding: 4px 11px !important; background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: var(--g-text-2); }
+.g-seg button:hover { color: var(--g-text); background: rgba(255,255,255,.12) !important; }
+.g-seg button.on { background: rgba(255,255,255,.9) !important; color: #14161c; }
+
+/* list rows (object sidebar, notes) */
+.g-item { display: flex; align-items: center; gap: var(--g-s2); padding: 6px 10px; border-radius: var(--g-r-sm); cursor: pointer; transition: background var(--g-fast); }
+.g-item:hover { background: rgba(255,255,255,.1); }
+.g-item.on { background: rgba(110,160,255,.28); box-shadow: inset 0 0 0 1px rgba(140,180,255,.4); }
+.g-item.off { opacity: .45; }
+.g-card { background: rgba(255,255,255,.07); border: 1px solid var(--g-border-soft); border-radius: var(--g-r-sm); padding: var(--g-s2) var(--g-s3); }
+
+/* tooltips */
+.g-tip { position: fixed; pointer-events: none; z-index: 70; font: 12px var(--g-font); color: var(--g-text); padding: 5px 11px; border-radius: var(--g-r-pill);
+  background: var(--g-tint-strong); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); border: 1px solid var(--g-border); box-shadow: var(--g-shadow-1); }
+
+/* ---------- app chrome: pieces that already exist in the page ---------- */
+#start { background: radial-gradient(ellipse at 50% 45%, rgba(8,10,18,.25), rgba(4,5,10,.62)) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: g-fade var(--g-slow) ease both; }
+#start .g-glass { position: relative; max-width: 640px; padding: 30px 38px; border-radius: 34px; animation: g-pop var(--g-slow) var(--g-ease) both; }
+#start h1 { font-weight: 600; font-size: 26px; letter-spacing: -.02em; }
+#start p { color: var(--g-text-2) !important; }
+#dot { background: rgba(255,255,255,.85) !important; box-shadow: 0 0 0 3px rgba(255,255,255,.18), 0 0 8px rgba(0,0,0,.4); }
+#prompt.g-glass { left: 50%; top: 57%; transform: translateX(-50%); animation: none; transition: opacity var(--g-fast) ease; }

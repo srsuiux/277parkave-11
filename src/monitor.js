@@ -1,3 +1,4 @@
+import { glassHide } from './ui/glass.js';
 import * as THREE from 'three';
 
 /**
@@ -172,29 +173,27 @@ function openUI() {
   document.getElementById('mon-ov').style.display = 'grid'; monitor.hooks.onOpen?.();
   document.getElementById('mon-url').focus(); placeHolder(); setStatus(monitor.status); redraw();
 }
-function closeUI(relock) { if (!monitor.open) return; monitor.open = false; document.getElementById('mon-ov').style.display = 'none'; placeHolder(); monitor.hooks.onClose?.(relock); }
+function closeUI(relock) { if (!monitor.open) return; monitor.open = false; glassHide(document.getElementById('mon-ov')); placeHolder(); monitor.hooks.onClose?.(relock); }
 export const openMonitor = openUI;
 
 export function initMonitorUI() {
-  const BTN = 'padding:6px 12px;border:1px solid #556;border-radius:8px;background:#242a38;color:#fff;cursor:pointer;font:13px system-ui';
-  const IN = 'flex:1;min-width:0;padding:7px 10px;border-radius:8px;border:1px solid #556;background:#0f1320;color:#fff;font:13px system-ui';
-  const ov = document.createElement('div'); ov.id = 'mon-ov';
-  ov.style.cssText = 'position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.72);z-index:30;font:13px system-ui;color:#eee';
+  const BTN = '', IN = '';
+  const ov = document.createElement('div'); ov.id = 'mon-ov'; ov.className = 'g-scrim'; ov.style.zIndex = 30;
   ov.innerHTML = `
-    <div id="mon-desk" style="position:relative;width:min(1000px,94vw);height:min(600px,86vh);border-radius:14px;border:10px solid #111;box-shadow:0 20px 80px #000;background:#0b1020 center/cover;overflow:hidden">
-      <div style="position:absolute;left:0;right:0;top:0;height:30px;background:rgba(10,12,18,.6);display:flex;align-items:center;padding:0 12px;gap:10px"><b>◆ Apartment</b><span style="flex:1"></span><span id="mon-clock"></span><button id="mon-close" style="${BTN};padding:2px 10px">✕ Leave monitor (Esc)</button></div>
-      <div style="position:absolute;left:18px;top:46px;bottom:18px;width:58%;background:rgba(16,20,30,.9);border:1px solid #445;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
-        <b>▶ Media player</b>
-        <div style="display:flex;gap:6px"><input id="mon-url" placeholder="Paste a YouTube, Spotify, SoundCloud or .mp3 / .mp4 link" style="${IN}"><button id="mon-play" style="${BTN};background:#1f6feb">Play</button></div>
-        <div id="mon-ph" style="flex:1;border-radius:8px;background:#000 center/contain no-repeat;display:grid;place-items:center;color:#667;min-height:120px">Nothing playing</div>
-        <div style="display:flex;gap:6px"><button id="mon-pause" style="${BTN}">⏯ Pause / resume</button><button id="mon-stop" style="${BTN}">⏹ Stop</button></div>
-        <div id="mon-status" style="color:#9ab;min-height:30px;font-size:12px"></div>
+    <div id="mon-desk" class="g-glass g-lg" style="position:relative;width:min(1000px,94vw);height:min(600px,86vh);padding:0;background:#0b1020 center/cover;overflow:hidden;border-radius:30px">
+      <div class="g-glass g-static g-row" style="position:absolute;left:12px;right:12px;top:12px;height:38px;padding:0 14px;border-radius:var(--g-r-pill);z-index:2"><b class="g-head">◆ Apartment</b><span class="g-grow"></span><span id="mon-clock" class="g-sub"></span><button id="mon-close" class="sm">Leave monitor <kbd>Esc</kbd></button></div>
+      <div class="g-glass g-static g-strong g-col" style="position:absolute;left:18px;top:62px;bottom:18px;width:58%;padding:14px;gap:10px">
+        <b class="g-head">▶ Media player</b>
+        <div class="g-row"><input id="mon-url" class="g-grow" placeholder="Paste a YouTube, Spotify, SoundCloud or .mp3 / .mp4 link"><button id="mon-play" class="primary">Play</button></div>
+        <div id="mon-ph" class="g-faint" style="flex:1;border-radius:var(--g-r-sm);background:#000 center/contain no-repeat;display:grid;place-items:center;min-height:120px">Nothing playing</div>
+        <div class="g-row"><button id="mon-pause">⏯ Pause / resume</button><button id="mon-stop">⏹ Stop</button></div>
+        <div id="mon-status" class="g-sub g-small" style="min-height:30px"></div>
       </div>
-      <div style="position:absolute;right:18px;top:46px;bottom:18px;width:34%;background:rgba(16,20,30,.9);border:1px solid #445;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:auto">
-        <b>🖼 Wallpaper</b>
+      <div class="g-glass g-static g-strong g-col" style="position:absolute;right:18px;top:62px;bottom:18px;width:34%;padding:14px;gap:10px;overflow:auto">
+        <b class="g-head">🖼 Wallpaper</b>
         <div id="mon-presets" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-        <div style="display:flex;gap:6px"><input id="mon-wpurl" placeholder="Image URL" style="${IN}"><button id="mon-wpapply" style="${BTN}">Set</button></div>
-        <button id="mon-wpup" style="${BTN}">⬆ Upload image…</button><input id="mon-wpfile" type="file" accept="image/*" style="display:none">
+        <div class="g-row"><input id="mon-wpurl" class="g-grow" placeholder="Image URL"><button id="mon-wpapply">Set</button></div>
+        <button id="mon-wpup">⬆ Upload image…</button><input id="mon-wpfile" type="file" accept="image/*" style="display:none">
       </div>
     </div>`;
   document.body.appendChild(ov);
@@ -204,9 +203,9 @@ export function initMonitorUI() {
   const $ = (id) => document.getElementById(id);
   const pr = $('mon-presets');
   for (const p of PRESETS) {
-    const b = document.createElement('button'); b.style.cssText = 'border:2px solid #556;border-radius:8px;padding:0;background:#000;cursor:pointer;color:#fff;font:12px system-ui;overflow:hidden';
+    const b = document.createElement('button'); b.style.cssText = 'border-radius:var(--g-r-sm);padding:0;overflow:hidden;font-size:12px';
     const c = document.createElement('canvas'); c.width = 240; c.height = 135; p.draw(c.getContext('2d'), 240, 135); c.style.cssText = 'width:100%;display:block';
-    b.append(c, Object.assign(document.createElement('div'), { textContent: p.name, style: 'padding:3px' }));
+    b.append(c, Object.assign(document.createElement('div'), { textContent: p.name, style: 'padding:4px 6px' }));
     b.onclick = () => setWallpaper({ type: 'preset', id: p.id }); pr.appendChild(b);
   }
   $('mon-play').onclick = () => play($('mon-url').value);

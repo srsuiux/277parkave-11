@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { glassShow, glassHide } from './ui/glass.js';
 
 const TYPES = [
   ['fix', 'Fix existing'],
@@ -11,22 +12,19 @@ const PIN_COLOR = { fix: 0xffb020, add: 0x35d07f, remove: 0xff4d4d, move: 0x4da3
 const STORE = 'apartment-feedback-notes';
 
 const CSS = `
-#fb-btn{position:fixed;top:12px;right:12px;z-index:30;background:rgba(20,20,20,.8);color:#eee;border:1px solid #555;border-radius:6px;padding:6px 10px;cursor:pointer;font:13px system-ui}
-#fb-btn.on{background:#b8860b;border-color:#e0a82e}
-#fb-btn kbd,#fb kbd{background:#2b2b2b;border:1px solid #555;border-radius:4px;padding:0 5px;font-size:11px}
-#fb{position:fixed;top:48px;right:12px;bottom:12px;width:320px;z-index:30;background:rgba(18,18,18,.92);color:#eee;border-radius:8px;padding:12px;display:none;flex-direction:column;gap:8px;font:13px system-ui;overflow:auto}
-#fb h3{margin:0;font-size:14px}
-#fb .hint{color:#999;font-size:12px;line-height:1.5}
-#fb .sel{background:#222;border-radius:6px;padding:8px;font-size:12px;line-height:1.5;word-break:break-word}
-#fb .sel b{color:#ffcc33}
-#fb select,#fb textarea,#fb button{font:13px system-ui;background:#2b2b2b;color:#eee;border:1px solid #484848;border-radius:5px;padding:6px}
+#fb-btn{top:12px;right:16px;z-index:30;padding:5px 14px;cursor:pointer;font:500 12px var(--g-font);animation:none}
+#fb-btn.on{background:linear-gradient(rgba(255,197,107,.35),rgba(255,197,107,.2)),var(--g-tint);border-color:rgba(255,197,107,.7)}
+#fb{top:56px;right:16px;bottom:16px;width:330px;z-index:30;padding:16px;display:none;flex-direction:column;gap:10px;overflow:auto}
+#fb h3{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em}
+#fb .hint{color:var(--g-text-2);font-size:12px;line-height:1.5}
+#fb .sel{background:rgba(255,255,255,.07);border:1px solid var(--g-border-soft);border-radius:var(--g-r-sm);padding:10px 12px;font-size:12px;line-height:1.5;word-break:break-word}
+#fb .sel b{color:var(--g-warn)}
 #fb textarea{min-height:90px;resize:vertical}
-#fb button{cursor:pointer}#fb button:hover{background:#3a3a3a}
-#fb button.primary{background:#2d6a4f;border-color:#40916c}
-#fb .row{display:flex;gap:6px}#fb .row>*{flex:1}
-#fb .note{background:#222;border-radius:6px;padding:6px 8px;font-size:12px;display:grid;gap:2px}
-#fb .note .t{color:#aaa}#fb .note button{padding:1px 6px;justify-self:end}
-#fb .status{font-size:12px;color:#8fd19e;word-break:break-word}
+#fb button.primary{font-weight:600}
+#fb .row{display:flex;gap:8px}#fb .row>*{flex:1}
+#fb .note{background:rgba(255,255,255,.07);border:1px solid var(--g-border-soft);border-radius:var(--g-r-sm);padding:8px 12px;font-size:12px;display:grid;gap:3px;margin-top:6px}
+#fb .note .t{color:var(--g-text-2)}#fb .note button{padding:2px 10px;justify-self:end;font-size:11.5px}
+#fb .status{font-size:12px;color:var(--g-ok);word-break:break-word}
 `;
 
 export function initFeedback({ scene, camera, renderer, roots, onEnter, onExit }) {
@@ -37,9 +35,9 @@ export function initFeedback({ scene, camera, renderer, roots, onEnter, onExit }
   // ---------- DOM ----------
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('div');
-  btn.id = 'fb-btn'; btn.innerHTML = '✎ Feedback mode <kbd>F</kbd>';
+  btn.id = 'fb-btn'; btn.className = 'g-glass g-pill'; btn.innerHTML = '✎ Feedback mode <kbd>F</kbd>';
   const panel = document.createElement('div');
-  panel.id = 'fb';
+  panel.id = 'fb'; panel.className = 'g-glass g-strong';
   panel.innerHTML = `
     <h3>Feedback <span id="fb-count"></span></h3>
     <div class="hint">Click anything to select it. <b>Right-drag</b> to look, <kbd>WASD</kbd> to move, <kbd>F</kbd> to leave.</div>
@@ -135,7 +133,7 @@ export function initFeedback({ scene, camera, renderer, roots, onEnter, onExit }
 
   // ---------- hover label ----------
   const tip = document.createElement('div');
-  tip.style.cssText = 'position:fixed;z-index:40;pointer-events:none;background:rgba(0,0,0,.78);color:#fff;font:12px system-ui;padding:3px 8px;border-radius:5px;display:none;max-width:320px';
+  tip.className = 'g-tip'; tip.style.cssText = 'display:none;max-width:320px';
   document.body.appendChild(tip);
   let lastHover = 0;
   function hover(ev) {
@@ -236,7 +234,7 @@ export function initFeedback({ scene, camera, renderer, roots, onEnter, onExit }
   // ---------- mode ----------
   function toggle(force) {
     state.edit = force ?? !state.edit;
-    panel.style.display = state.edit ? 'flex' : 'none';
+    state.edit ? glassShow(panel, 'flex') : glassHide(panel);
     pins.visible = state.edit;
     if (!state.edit) tip.style.display = 'none';
     btn.classList.toggle('on', state.edit);
