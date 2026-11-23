@@ -36,6 +36,7 @@ const I = {
   moon: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z',
   cloud: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z',
   expand: 'M8 3H5a2 2 0 0 0-2 2v3 M21 8V5a2 2 0 0 0-2-2h-3 M3 16v3a2 2 0 0 0 2 2h3 M16 21h3a2 2 0 0 0 2-2v-3',
+  search: 'm21 21-4.34-4.34 M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16z', left: 'm15 18-6-6 6-6', right: 'm9 18 6-6-6-6',
   x: 'M18 6 6 18 M6 6l12 12', plus: 'M5 12h14 M12 5v14', minus: 'M5 12h14',
   power: 'M12 2v10 M18.4 6.6a9 9 0 1 1-12.77.04', clock: 'M12 6v6l4 2 M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
   shield: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
@@ -54,176 +55,197 @@ const catOf = (o) => { const t = o.name + ' ' + (o.userData.label ?? ''); return
 const CAT_ICON = { 'Bathroom fixtures': 'drops', 'Kitchen appliances': 'flame', Electronics: 'laptop', Furniture: 'sofa', 'Personal belongings': 'box', 'Other assets': 'box' };
 const POWERISH = ['power_toggle', 'fan_speed', 'water_flow', 'connection'];
 
+const TINT = { teal: ['#2f8591', 'tint-teal'], coral: ['#cf4b4b', 'tint-coral'], salmon: ['#c76b57', 'tint-salmon'], sage: ['#2d8a64', 'tint-sage'] };
+const CAT_COLOR = { lighting: '#d98a3d', climate: '#cf4b4b', plumbing: '#2f8591', openings: '#5a6fa8', electronics: '#5a6fa8', furniture: '#c0794a', 'Kitchen appliances': '#cf4b4b', 'Bathroom fixtures': '#2f8591', Electronics: '#5a6fa8', Furniture: '#c0794a', 'Personal belongings': '#7d62b0', 'Other assets': '#6b7280' };
+
 export function initDashboard({ devices, cameras, layout, renderer, scene, weatherInfo, clock, hooks }) {
   const $ = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstElementChild; };
   const root = $(`<div id="cc" class="g-scrim" role="dialog" aria-label="Smart Home Command Center"></div>`);
-  const win = $(`<div class="g-glass g-strong cc-win"></div>`);
-  root.append(win); document.body.append(root);
+  const app = $(`<div class="cc-app"></div>`);
+  root.append(app); document.body.append(root);
   const openBtn = $(`<button id="cc-open" class="g-glass g-pill" title="Open the Command Center (Tab)">${svg('home')}<span>Command Center</span><kbd>Tab</kbd></button>`);
   document.body.append(openBtn);
 
-  const PAGES = [['overview', 'Overview', 'home'], ['cameras', 'Cameras', 'camera'], ['rooms', 'Rooms', 'rooms'], ['inventory', 'My Inventory', 'box'], ['environment', 'Environment', 'therm']];
-  let page = 'overview', roomSel = ROOM_ORDER[0], big = null, binds = [], lastSnap = '', lastEnv = '', lastInv = '', toastT = 0;
+  const PAGES = [['overview', 'Home', 'home'], ['cameras', 'Cameras', 'camera'], ['rooms', 'Rooms', 'rooms'], ['inventory', 'My Inventory', 'box'], ['environment', 'Environment', 'therm']];
+  let page = 'overview', roomSel = 'all', invCat = 'all', camIdx = 0, query = '', big = null, binds = [], lastSnap = '', lastEnv = '', lastInv = '', toastT = 0;
   const api = { open: false, hooks: hooks ?? {} };
+  const q = () => query.trim().toLowerCase();
+  const hit = (s) => !q() || String(s).toLowerCase().includes(q());
 
-  const nav = $(`<nav class="cc-nav"><div class="cc-brand"><div class="cc-logo">${svg('home', 'lg')}</div><div class="g-head">277 Park Ave #11<div class="g-faint g-small" style="font-weight:400">Command Center</div></div></div></nav>`);
+  // ---------- frame: top bar, nav panel, content ----------
+  const top = $(`<header class="cc-panel cc-top"><div class="cc-brand">${svg('home', 'lg')}<div><b>Command Center</b><span>277 Park Ave #11</span></div></div><label class="cc-search">${svg('search')}<input type="search" placeholder="Search devices and assets" aria-label="Search devices and assets"></label><span class="cc-grow"></span><span class="cc-chip" id="cc-wx"></span><span class="cc-chip" id="cc-time"></span></header>`);
+  const nav = $(`<nav class="cc-panel cc-nav" aria-label="Sections"></nav>`);
   for (const [id, label, icon] of PAGES) { const b = $(`<button class="cc-tab" data-page="${id}">${svg(icon)}<span class="lbl">${label}</span></button>`); b.onclick = () => go(id); nav.append(b); }
-  nav.append($('<div class="cc-spacer"></div>'));
-  const closeB = $(`<button class="cc-tab">${svg('x')}<span class="lbl">Close <kbd>Esc</kbd></span></button>`); closeB.onclick = () => close(true); nav.append(closeB);
-  const main = $(`<main class="cc-main"><div class="cc-head"><h2 class="g-title" id="cc-title"></h2><span class="g-glass g-pill g-static" id="cc-time" style="padding:5px 14px"></span></div><div class="cc-body" id="cc-body"></div></main>`);
-  win.append(nav, main);
-  const body = main.querySelector('#cc-body'), title = main.querySelector('#cc-title'), timePill = main.querySelector('#cc-time');
-  const toast = (t) => { let el = win.querySelector('.cc-toast'); if (!el) { el = $('<div class="g-glass g-pill cc-toast" style="position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:9"></div>'); win.append(el); } el.textContent = t; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { el.style.display = 'none'; }, 2600); };
+  const main = $(`<main class="cc-main"></main>`);
+  const closePill = $(`<button class="cc-closepill g-glass g-pill" aria-label="Close the Command Center">Close ${svg('x')}<kbd>Esc</kbd></button>`);
+  app.append(top, nav, main); root.append(closePill);
+  const search = top.querySelector('input'), wx = top.querySelector('#cc-wx'), timeChip = top.querySelector('#cc-time');
+  search.oninput = () => { query = search.value; render(); };
+  search.onkeydown = (e) => e.stopPropagation();
+  closePill.onclick = () => close(true);
+  const toast = (t) => { let el = app.querySelector('.cc-toast'); if (!el) { el = $('<div class="cc-toast cc-chip"></div>'); app.append(el); } el.textContent = t; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { el.style.display = 'none'; }, 2600); };
+  const panel = (title, ...kids) => { const p = $(`<section class="cc-panel cc-box"><div class="cc-ph"><h2>${title}</h2><span class="cc-grow"></span><span class="cc-actions"></span></div><div class="cc-pb"></div></section>`); p.querySelector('.cc-pb').append(...kids); return p; };
+  const pills = (items, cur, set) => { const w = $(`<div class="cc-pills" role="tablist"></div>`); for (const [id, label] of items) { const b = $(`<button role="tab" class="${id === cur ? 'on' : ''}">${esc(label)}</button>`); b.onclick = () => { set(id); render(); }; w.append(b); } return w; };
 
-  // ---------- device UI ----------
-  const sdev = (d) => d.state();
-  function deviceCard(d, { details = false } = {}) {
+  // ---------- activity log (derived from real device state changes) ----------
+  const log = []; const prev = new Map(); let logReady = false;
+  function logTick() {
+    for (const d of devices.devices) {
+      let t; try { const s = d.state(); t = d.controls.map((c) => c.text(s)).join(' · '); } catch { continue; }
+      const was = prev.get(d.id); prev.set(d.id, t);
+      if (logReady && was !== undefined && was !== t) log.unshift({ at: new Date(), text: `${d.name}: ${t.toLowerCase()}`, on: d.controls.some((c) => c.on?.(d.state())) });
+    }
+    logReady = true; if (log.length > 40) log.length = 40;
+  }
+  logTick(); setInterval(logTick, 700);
+
+  // ---------- cards ----------
+  const icTile = (icon, color) => `<span class="cc-ic" style="--ic:${color}">${svg(icon)}</span>`;
+  function deviceCard(d) {
     const c0 = d.controls[0];
-    const el = $(`<div class="cc-dev" data-dev="${d.id}" data-cat="${d.category}"><div class="top">${svg(d.icon)}<div class="nm" tabindex="0" role="button" aria-label="Details for ${esc(d.name)}">${esc(d.name)}</div></div><div class="top"><div class="st"><i></i><span></span></div><span style="flex:1"></span><span class="ctl"></span></div>${details ? '<div class="det"></div>' : ''}</div>`);
-    const ctl = el.querySelector('.ctl'), st = el.querySelector('.st span'), det = el.querySelector('.det');
-    const sw = [];
+    const el = $(`<div class="cc-card cc-dev" data-dev="${d.id}">${icTile(d.icon, CAT_COLOR[d.category] ?? '#5a6fa8')}<div class="cc-dtxt"><div class="nm" tabindex="0" role="button" aria-label="Details for ${esc(d.name)}">${esc(d.name)}</div><div class="st"><i></i><span></span></div></div><span class="ctl"></span></div>`);
+    const ctl = el.querySelector('.ctl'), st = el.querySelector('.st span'), sw = [];
     d.controls.forEach((c, i) => {
-      let b;
-      if (c.kind === 'toggle') { b = $(`<button class="cc-sw" role="switch" aria-label="${esc(d.name + ' ' + c.label)}"></button>`); }
-      else if (c.kind === 'step') { b = $(`<button class="sm">${c.label} ›</button>`); }
-      else { b = $(`<button class="sm">${esc(c.label)}</button>`); }
+      const b = c.kind === 'toggle' ? $(`<button class="cc-sw" role="switch" aria-label="${esc(d.name + ' ' + c.label)}"></button>`) : $(`<button class="cc-btn">${esc(c.label)}${c.kind === 'step' ? ' ›' : ''}</button>`);
       b.onclick = () => { const err = devices.run(d.id, i); if (err) { toast(err === 'sealed' ? 'This door is sealed' : err); el.classList.add('err'); setTimeout(() => el.classList.remove('err'), 320); } refresh(true); };
       ctl.append(b); sw.push(b);
     });
-    const toggleDet = () => { const x = el.querySelector('.det') ?? el.appendChild($('<div class="det"></div>')); x.hidden = !x.hidden; if (!x.hidden) fillDet(x); };
-    const fillDet = (x) => { x.innerHTML = `${esc(d.category)} · ${d.capabilities.map(esc).join(', ') || 'no controls'}<br><code>${esc(JSON.stringify(sdev(d)))}</code>`; };
-    el.querySelector('.nm').onclick = toggleDet; el.querySelector('.nm').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDet(); } };
+    const showDet = () => { let x = el.querySelector('.det'); if (!x) { x = $('<div class="det"></div>'); el.append(x); } else { x.remove(); return; } x.innerHTML = `${esc(d.category)} · ${d.capabilities.map(esc).join(', ') || 'no controls'}`; };
+    el.querySelector('.nm').onclick = showDet; el.querySelector('.nm').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showDet(); } };
     binds.push(() => {
-      const s = sdev(d), on = c0.on?.(s) ?? false;
-      el.classList.toggle('on', !!on);
-      const text = d.controls.map((c) => c.text(s)).join(' · ');
-      if (st.textContent !== text) st.textContent = text;
+      const s = d.state(); el.classList.toggle('on', !!c0.on?.(s));
+      const text = d.controls.map((c) => c.text(s)).join(' · '); if (st.textContent !== text) st.textContent = text;
       d.controls.forEach((c, i) => { if (c.kind === 'toggle') sw[i].setAttribute('aria-pressed', c.on(s) ? 'true' : 'false'); });
-      const x = el.querySelector('.det'); if (x && !x.hidden) fillDet(x);
     });
     return el;
   }
-  const roomDevices = (r) => devices.active().filter((d) => d.room === r);
-
-  // ---------- pages ----------
-  const feedEls = []; // { feed, canvas, size }
+  const roomDevices = (r) => devices.active().filter((d) => d.room === r && hit(d.name + ' ' + ROOM_LABEL[r]));
+  const feedEls = [];
   function feedCard(f, mini = false) {
-    const el = $(`<div class="cc-feed${mini ? ' mini' : ''}"><div class="view"><canvas></canvas><span class="badge">${f.kind === 'simulated' ? 'SIMULATED 3D' : 'LIVE HARDWARE'}</span><div class="off">CAMERA OFF</div></div><div class="meta"><div class="g-grow"><b>${esc(f.name)}</b><span class="g-small g-sub">${esc(f.room)}</span></div><span class="cc-pill"></span><button class="sm" aria-label="Turn ${esc(f.name)} on or off">${svg('power')}</button>${mini ? '' : `<button class="sm" aria-label="Expand ${esc(f.name)}">${svg('expand')}</button>`}</div></div>`);
-    const cv = el.querySelector('canvas'), off = el.querySelector('.off'), pill = el.querySelector('.cc-pill'); const [pw, ex] = el.querySelectorAll('button');
+    const el = $(`<div class="cc-card cc-feed${mini ? ' mini' : ''}"><div class="view"><canvas></canvas><span class="badge">${f.kind === 'simulated' ? 'Simulated 3D view' : 'Live hardware'}</span><div class="off">Camera off</div></div><div class="meta"><div class="g-grow"><b>${esc(f.name)}</b><span>${esc(f.room)}</span></div><span class="cc-tag"></span><button class="cc-btn ico" aria-label="Turn ${esc(f.name)} on or off">${svg('power')}</button>${mini ? '' : `<button class="cc-btn ico" aria-label="Expand ${esc(f.name)}">${svg('expand')}</button>`}</div></div>`);
+    const cv = el.querySelector('canvas'), off = el.querySelector('.off'), tag = el.querySelector('.cc-tag'); const [pw, ex] = el.querySelectorAll('button');
     feedEls.push({ feed: f, canvas: cv, size: 'small', el });
     pw.onclick = () => { cameras.setActive(f.id, !f.active); refresh(true); };
-    if (ex) ex.onclick = () => openBig(f); el.querySelector('.view').onclick = (e) => { if (!mini && e.target.closest('.view')) openBig(f); };
-    binds.push(() => { off.style.display = f.active ? 'none' : 'grid'; pill.textContent = f.active ? '● ACTIVE' : '○ INACTIVE'; pill.classList.toggle('ok', f.active); });
+    if (ex) ex.onclick = () => openBig(f);
+    el.querySelector('.view').onclick = () => { if (!mini) openBig(f); };
+    binds.push(() => { off.style.display = f.active ? 'none' : 'grid'; tag.textContent = f.active ? 'Active' : 'Inactive'; tag.classList.toggle('on', f.active); });
     return el;
   }
   function openBig(f) {
     big?.remove(); feedEls.splice(0, feedEls.length, ...feedEls.filter((x) => x.size !== 'big'));
-    const el = $(`<div class="cc-big"><div class="g-row"><div class="g-title" style="flex:1">${esc(f.name)} <span class="g-sub g-small" style="font-weight:400">· ${esc(f.room)} · <b>SIMULATED 3D VIEW</b>, not hardware footage</span></div><span class="g-seg"></span><button aria-label="Close expanded view">${svg('x')}</button></div><div class="view"><canvas></canvas></div></div>`);
-    const seg = el.querySelector('.g-seg'); let cur = f; const cv = el.querySelector('canvas');
-    const entry = { feed: f, canvas: cv, size: 'big', el }; feedEls.push(entry);
-    for (const ff of cameras.feeds) { const b = $(`<button class="${ff === f ? 'on' : ''}">${esc(ff.room)}</button>`); b.onclick = () => { entry.feed = cur = ff; seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); el.querySelector('.g-title').firstChild.textContent = ff.name + ' '; }; seg.append(b); }
+    const el = $(`<div class="cc-big cc-panel"><div class="cc-ph"><h2>${esc(f.name)}</h2><span class="cc-note">Simulated 3D view, not hardware footage</span><span class="cc-grow"></span><span class="cc-pills"></span><button class="cc-btn ico" aria-label="Close expanded view">${svg('x')}</button></div><div class="view"><canvas></canvas></div></div>`);
+    const seg = el.querySelector('.cc-pills'); const cv = el.querySelector('canvas'), entry = { feed: f, canvas: cv, size: 'big', el }; feedEls.push(entry);
+    for (const ff of cameras.feeds) { const b = $(`<button class="${ff === f ? 'on' : ''}">${esc(ff.room)}</button>`); b.onclick = () => { entry.feed = ff; seg.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); el.querySelector('h2').textContent = ff.name; }; seg.append(b); }
     el.querySelector('button[aria-label]').onclick = () => { el.remove(); big = null; feedEls.splice(0, feedEls.length, ...feedEls.filter((x) => x !== entry)); };
-    win.append(el); big = el; void cur;
+    app.append(el); big = el;
   }
 
   function envData() {
-    const w = weatherInfo(); const out = [];
-    out.push(['Outdoor temperature', w.live ? `${Math.round((w.tempF - 32) * 5 / 9)}°C <span class="g-sub g-small">/ ${Math.round(w.tempF)}°F</span>` : '<span class="un">Unavailable</span>', w.live ? 'Live weather service' : 'Weather service not connected']);
-    out.push(['Indoor temperature', '<span class="un">Unavailable</span>', 'No indoor sensor is connected']);
-    out.push(['Weather', w.live ? esc(w.label) : '<span class="un">Unavailable</span>', w.live ? 'Source: Open-Meteo' : 'Showing a default scene, not a measurement']);
-    out.push(['Time', esc(w.clock), `${esc(w.zone)}${w.simulated ? ' · simulated time' : ''}`]);
-    out.push(['Day / night', `${w.day ? svg('sun') : svg('moon')} ${esc(w.phase)}`, 'From the sun position at the apartment']);
-    return out;
+    const w = weatherInfo();
+    return [
+      ['Outdoor temperature', w.live ? `${Math.round((w.tempF - 32) * 5 / 9)}°C <small>${Math.round(w.tempF)}°F</small>` : '<em>Unavailable</em>', w.live ? 'Live weather service' : 'Weather service not connected', 'therm', 'teal'],
+      ['Indoor temperature', '<em>Unavailable</em>', 'No indoor sensor is connected', 'therm', 'salmon'],
+      ['Weather', w.live ? esc(w.label) : '<em>Unavailable</em>', w.live ? 'Source: Open-Meteo' : 'Showing a default scene, not a measurement', 'cloud', 'coral'],
+      ['Time', esc(w.clock), esc(w.zone) + (w.simulated ? ' (simulated time)' : ''), 'clock', 'sage'],
+      ['Day or night', esc(w.phase), 'From the sun position at the apartment', w.day ? 'sun' : 'moon', 'teal'],
+    ];
   }
-  const envTile = ([k, v, n]) => `<div class="g-glass g-static cc-stat"><span>${k}</span><b>${v}</b><span class="g-faint">${n}</span></div>`;
+  const statCard = (label, tint, icon, fn) => { const [col, cls] = TINT[tint]; const el = $(`<div class="cc-card cc-stat ${cls}">${icTile(icon, col)}<div><b></b><span>${label}</span></div></div>`); const b = el.querySelector('b'); binds.push(() => { const v = String(fn()); if (b.textContent !== v) b.textContent = v; }); return el; };
 
+  // ---------- pages ----------
+  function roomsPanel(wide) {
+    const items = [['all', 'All'], ...ROOM_ORDER.map((r) => [r, ROOM_LABEL[r].split(' ')[0]])];
+    const grid = $(`<div class="cc-grid${wide ? ' wide' : ''}"></div>`);
+    for (const r of ROOM_ORDER.filter((x) => roomSel === 'all' || x === roomSel)) {
+      const list = roomDevices(r); if (!list.length) continue;
+      const head = $(`<div class="cc-gh">${svg('rooms')}<b>${ROOM_LABEL[r]}</b><span class="cc-tag"></span></div>`); const tag = head.querySelector('.cc-tag');
+      binds.push(() => { const n = list.filter((d) => devices.isOn(d)).length, t = `${n} of ${list.length} on`; if (tag.textContent !== t) tag.textContent = t; });
+      grid.append(head); list.forEach((d) => grid.append(deviceCard(d)));
+    }
+    if (!grid.children.length) grid.append($(`<p class="cc-empty">No devices match "${esc(query)}". Clear the search to see all devices.</p>`));
+    const p = panel(wide ? 'Rooms' : 'Rooms and devices', grid); p.querySelector('.cc-actions').append(pills(items, roomSel, (v) => { roomSel = v; })); return p;
+  }
   function overview() {
     const ds = devices.active(), powerish = ds.filter((d) => d.capabilities.some((c) => POWERISH.includes(c)));
     const stats = $(`<div class="cc-stats"></div>`);
-    const tile = (label, fn) => { const el = $(`<div class="g-glass g-static cc-stat"><b></b><span>${label}</span></div>`); const b = el.querySelector('b'); binds.push(() => { const v = fn(); if (b.textContent !== v) b.textContent = v; }); stats.append(el); };
-    tile('Registered devices', () => ds.length);
-    tile('Powered on', () => powerish.filter((d) => devices.isOn(d)).length);
-    tile('Powered off', () => powerish.filter((d) => !devices.isOn(d)).length);
-    tile('Doors open', () => ds.filter((d) => d.icon === 'door' && d.state().open).length);
-    tile('Active cameras', () => `${cameras.feeds.filter((f) => f.active).length}/${cameras.feeds.length}`);
-    const envT = $(`<div class="g-glass g-static cc-stat"><b></b><span>Outdoor · Indoor</span></div>`); const eb = envT.querySelector('b');
-    binds.push(() => { const w = weatherInfo(); const t = w.live ? `${Math.round((w.tempF - 32) * 5 / 9)}°C` : 'n/a'; if (eb.textContent !== t + ' · n/a') eb.textContent = t + ' · n/a'; }); stats.append(envT);
-    const status = $(`<div class="g-glass g-static cc-stat" style="grid-column:1/-1;display:flex;align-items:center;gap:12px">${svg('shield', 'lg')}<div><b style="font-size:16px"></b><span>Apartment status</span></div></div>`); const sb = status.querySelector('b');
-    binds.push(() => { const e = devices.get('north_door'), s = e?.state(); const lights = ds.filter((d) => d.category === 'lighting' && devices.isOn(d)).length; const v = `${s ? (s.open ? 'Entrance door open' : s.locked ? 'Entrance locked' : 'Entrance door closed') : 'Entrance n/a'} · ${lights} light${lights === 1 ? '' : 's'} on`; if (sb.textContent !== v) sb.textContent = v; });
-    const rooms = $(`<div class="cc-rooms"></div>`);
-    for (const r of ROOM_ORDER) {
-      const list = roomDevices(r); if (!list.length) continue;
-      const card = $(`<section class="g-glass g-static cc-room"><header>${svg('rooms')}<span class="g-head">${ROOM_LABEL[r]}</span><span class="cc-pill"></span></header><div class="cc-devs"></div></section>`);
-      const pill = card.querySelector('.cc-pill'); binds.push(() => { const n = list.filter((d) => devices.isOn(d)).length; const t = `${n}/${list.length} on`; if (pill.textContent !== t) pill.textContent = t; });
-      const g = card.querySelector('.cc-devs'); list.forEach((d) => g.append(deviceCard(d))); rooms.append(card);
-    }
-    const strip = $(`<div class="cc-feeds"></div>`); cameras.feeds.slice(0, 3).forEach((f) => strip.append(feedCard(f, true)));
-    const dev = $(`<details class="g-glass g-static g-pad"><summary class="g-head">Developer info</summary><div class="cc-kv" id="cc-dev" style="margin-top:10px"></div></details>`);
-    const kv = dev.querySelector('#cc-dev'); let dt = 0;
+    stats.append(statCard('Registered devices', 'teal', 'plug', () => ds.length), statCard('Powered on', 'coral', 'power', () => powerish.filter((d) => devices.isOn(d)).length),
+      statCard('Doors open', 'salmon', 'door', () => ds.filter((d) => d.icon === 'door' && d.state().open).length), statCard('Active cameras', 'sage', 'camera', () => `${cameras.feeds.filter((f) => f.active).length} of ${cameras.feeds.length}`));
+    const center = $(`<div class="cc-col"></div>`); center.append(stats, roomsPanel(false));
+
+    // right column: ring gauge, one camera, activity log, developer info
+    const R = 54, C = 2 * Math.PI * R;
+    const ring = panel('Home status', $(`<div class="cc-ring"><svg viewBox="0 0 140 140" aria-hidden="true"><circle cx="70" cy="70" r="${R}" class="trk"/><circle cx="70" cy="70" r="${R}" class="val" stroke-dasharray="${C}" stroke-dashoffset="${C}" transform="rotate(-90 70 70)"/></svg><div class="mid"><b></b><span>devices on</span></div></div>`), $(`<p class="cc-sub"></p>`));
+    const rb = ring.querySelector('.mid b'), rv = ring.querySelector('.val'), rs = ring.querySelector('.cc-sub');
+    binds.push(() => { const on = powerish.filter((d) => devices.isOn(d)).length, pct = powerish.length ? Math.round(100 * on / powerish.length) : 0; rb.textContent = pct + '%'; rv.setAttribute('stroke-dashoffset', C * (1 - pct / 100)); const e = devices.get('north_door')?.state(); const t = `${on} of ${powerish.length} powered devices on. ${e ? (e.open ? 'Entrance door is open.' : e.locked ? 'Entrance is locked.' : 'Entrance door is closed.') : ''}`; if (rs.textContent !== t) rs.textContent = t; });
+    const cam = cameras.feeds[camIdx % cameras.feeds.length]; const camP = panel('Cameras', feedCard(cam, true));
+    const nb = $(`<span class="cc-pills"><button class="on" aria-label="Previous camera">${svg('left')}</button><button class="on" aria-label="Next camera">${svg('right')}</button></span>`); nb.children[0].onclick = () => { camIdx = (camIdx + cameras.feeds.length - 1) % cameras.feeds.length; render(); }; nb.children[1].onclick = () => { camIdx = (camIdx + 1) % cameras.feeds.length; render(); }; camP.querySelector('.cc-actions').append(nb);
+    const list = $(`<ol class="cc-log"></ol>`); const logP = panel('Activity', list); let lastLog = -1;
+    binds.push(() => { const k = log.length + '|' + (log[0]?.at.getTime() ?? 0); if (k === lastLog) return; lastLog = k; list.innerHTML = log.length ? log.slice(0, 12).map((l) => `<li class="${l.on ? 'on' : ''}"><i></i><div><b>${esc(l.text)}</b><span>${l.at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</span></div></li>`).join('') : '<li class="none">Changes to lights, doors and appliances will appear here.</li>'; });
+    const dev = $(`<details class="cc-panel cc-dev-info"><summary>Developer info</summary><div class="cc-kv"></div></details>`); const kv = dev.querySelector('.cc-kv'); let dt = 0;
     binds.push(() => { if (!dev.open || performance.now() - dt < 500) return; dt = performance.now(); kv.innerHTML = devInfo().map(([k, v]) => `<span>${k}</span><span>${esc(v)}</span>`).join(''); });
-    return [stats, status, sec('Rooms', 'rooms', rooms), sec('Camera monitoring', 'camera', strip), sec('Environment', 'therm', $(`<div class="cc-env" id="cc-env-ov"></div>`)), dev];
+    const side = $(`<div class="cc-col side"></div>`); side.append(ring, camP, logP, dev);
+    return [center, side];
   }
-  const sec = (h, icon, el) => { const s = $(`<section class="cc-sec"><h3>${svg(icon)}${h}</h3></section>`); s.append(el); return s; };
   function devInfo() {
     const info = renderer.info; let meshes = 0; scene.traverse((o) => { if (o.isMesh) meshes++; });
-    return [['Application', pkg.name + ' · 277 Park Ave #11'], ['Developer', 'Personal project (built with Claude Code)'], ['Application version', pkg.version], ['Three.js', 'r' + THREE.REVISION],
-      ['Scene', 'Loaded · ' + layout.movables.length + ' registered objects, ' + meshes + ' meshes'], ['Rendering', `${renderer.getContext() ? 'WebGL active' : 'no context'} · ${clock.fps()} fps · ${info.render.calls} draw calls`],
-      ['Active devices', devices.devices.filter((d) => devices.isOn(d)).length + ' of ' + devices.devices.length], ['Camera system', `${cameras.feeds.filter((f) => f.active).length}/${cameras.feeds.length} active · all simulated (no hardware linked)`]];
+    return [['Application', pkg.name], ['Developer', 'Personal project, built with Claude Code'], ['Version', pkg.version], ['Three.js', 'r' + THREE.REVISION],
+      ['Scene', `Loaded, ${layout.movables.length} registered objects, ${meshes} meshes`], ['Rendering', `${renderer.getContext() ? 'WebGL active' : 'no context'}, ${clock.fps()} fps, ${info.render.calls} draw calls`],
+      ['Active devices', devices.devices.filter((d) => devices.isOn(d)).length + ' of ' + devices.devices.length], ['Cameras', `${cameras.feeds.filter((f) => f.active).length} of ${cameras.feeds.length} active, all simulated`]];
   }
   function camerasPage() {
-    const g = $(`<div class="cc-feeds"></div>`); cameras.feeds.forEach((f) => g.append(feedCard(f)));
-    return [$(`<p class="cc-hint">These are <b>simulated</b> views rendered from the 3D model of your apartment by virtual cameras. They are not hardware footage. Click a feed to expand it. Your first-person view is not affected.</p>`), g];
-  }
-  function roomsPage() {
-    const seg = $(`<div class="g-seg" role="tablist"></div>`);
-    for (const r of ROOM_ORDER) { const b = $(`<button role="tab" class="${r === roomSel ? 'on' : ''}">${ROOM_LABEL[r]} <span class="g-faint">${roomDevices(r).length}</span></button>`); b.onclick = () => { roomSel = r; render(); }; seg.append(b); }
-    const g = $(`<div class="cc-devs" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))"></div>`); roomDevices(roomSel).forEach((d) => g.append(deviceCard(d, { details: false })));
-    if (!roomDevices(roomSel).length) g.append($('<p class="cc-hint">No controllable devices in this room.</p>'));
-    return [seg, g, $(`<p class="cc-hint">Click a device name for its details. Everything here is the same state as the objects in the apartment: switch it here or walk up and use it, both stay in step.</p>`)];
+    const g = $(`<div class="cc-grid feeds"></div>`); cameras.feeds.filter((f) => hit(f.name + ' ' + f.room)).forEach((f) => g.append(feedCard(f)));
+    return [panel('Cameras', $(`<p class="cc-sub">These are simulated views of the 3D model of your apartment, rendered by virtual cameras. They are not hardware footage. Select a feed to expand it. Your first-person view is not affected.</p>`), g)];
   }
   const invObjs = () => layout.movables.filter((o) => !/^(wall|rocker|switch)/.test(o.name));
   function inventoryPage() {
-    const objs = invObjs(), added = objs.filter((o) => o.visible).length;
-    const stats = $(`<div class="cc-stats"><div class="g-glass g-static cc-stat"><b>${objs.length}</b><span>Registered assets</span></div><div class="g-glass g-static cc-stat"><b>${added}</b><span>Added to apartment</span></div><div class="g-glass g-static cc-stat"><b>${objs.length - added}</b><span>Available, not added</span></div></div>`);
-    const cats = {}; objs.forEach((o) => { cats[catOf(o)] = (cats[catOf(o)] ?? 0) + 1; });
-    const chips = $(`<div class="cc-chips">${Object.entries(cats).map(([k, v]) => `<span class="cc-pill ok">${esc(k)} · ${v}</span>`).join('')}</div>`);
-    const grid = $(`<div class="cc-inv"></div>`); const V = new THREE.Vector3();
+    const all = invObjs(), added = all.filter((o) => o.visible).length;
+    const stats = $(`<div class="cc-stats three"></div>`); stats.append(
+      Object.assign($(`<div class="cc-card cc-stat tint-teal">${icTile('box', '#2f8591')}<div><b>${all.length}</b><span>Registered assets</span></div></div>`)),
+      $(`<div class="cc-card cc-stat tint-sage">${icTile('home', '#2d8a64')}<div><b>${added}</b><span>Added to the apartment</span></div></div>`),
+      $(`<div class="cc-card cc-stat tint-salmon">${icTile('plus', '#c76b57')}<div><b>${all.length - added}</b><span>Available, not added</span></div></div>`));
+    const cats = {}; all.forEach((o) => { cats[catOf(o)] = (cats[catOf(o)] ?? 0) + 1; });
+    const objs = all.filter((o) => (invCat === 'all' || catOf(o) === invCat) && hit((o.userData.label ?? o.name) + ' ' + catOf(o)));
+    const grid = $(`<div class="cc-grid tiles"></div>`); const V = new THREE.Vector3();
     for (const o of objs.sort((a, b) => catOf(a).localeCompare(catOf(b)) || a.name.localeCompare(b.name))) {
-      o.getWorldPosition(V); const dv = devices.devices.find((d) => d.object === o || (d.object && o.getObjectById(d.object.id))); const st = dv ? dv.controls.map((c) => c.text(dv.state())).join(' · ') : o.visible ? 'In place' : '—';
-      const cat = catOf(o), t = $(`<div class="cc-tile ${o.visible ? '' : 'gone'}" data-cat="${esc(cat)}"><div class="pic">${svg(CAT_ICON[cat])}</div><b>${esc((o.userData.label ?? o.name).replace(/ - .*$/, ''))}</b><div class="g-small g-sub">${esc(cat)}<br>${o.visible ? esc(ROOM_LABEL[roomAt(V.x, V.z)]) + ' · ' + esc(st) : 'Not in apartment'}</div><span class="cc-pill ${o.visible ? 'ok' : ''}">${o.visible ? '✓ ADDED' : '○ AVAILABLE'}</span><button class="sm ${o.visible ? '' : 'primary'}" aria-label="${o.visible ? 'Remove' : 'Add'} ${esc(o.name)}">${svg(o.visible ? 'minus' : 'plus')} ${o.visible ? 'Remove' : 'Add'}</button></div>`);
+      o.getWorldPosition(V); const dv = devices.devices.find((d) => d.object === o || (d.object && o.getObjectById(d.object.id)));
+      const st = dv ? dv.controls.map((c) => c.text(dv.state())).join(' · ').toLowerCase() : 'in place'; const cat = catOf(o);
+      const t = $(`<div class="cc-card cc-tile ${o.visible ? '' : 'gone'}">${icTile(CAT_ICON[cat], CAT_COLOR[cat])}<div class="cc-dtxt"><div class="nm static">${esc((o.userData.label ?? o.name).replace(/ - .*$/, ''))}</div><div class="st2">${esc(cat)}<br>${o.visible ? esc(ROOM_LABEL[roomAt(V.x, V.z)]) + ', ' + esc(st) : 'Not in the apartment'}</div></div><div class="foot"><span class="cc-tag ${o.visible ? 'on' : ''}">${o.visible ? 'Added' : 'Available'}</span><button class="cc-btn ${o.visible ? '' : 'go'}" aria-label="${o.visible ? 'Remove' : 'Add'} ${esc(o.name)}">${svg(o.visible ? 'minus' : 'plus')}${o.visible ? 'Remove' : 'Add'}</button></div></div>`);
       t.querySelector('button').onclick = () => { layout.setVisible(o, !o.visible); layout.save?.(); toast(`${o.userData.label?.split(' - ')[0] ?? o.name} ${o.visible ? 'added to' : 'removed from'} the apartment. The model is kept.`); render(); };
       grid.append(t);
     }
-    return [stats, chips, grid, $(`<p class="cc-hint">Removing an asset only takes it out of the apartment (it stops being drawn and no longer blocks you). Its model and position are kept, so you can add it back at any time. Nothing is deleted.</p>`)];
+    if (!objs.length) grid.append($(`<p class="cc-empty">No assets match. Clear the search or pick another category.</p>`));
+    const p = panel('My Inventory', stats, $(`<p class="cc-sub">Removing an asset only takes it out of the apartment: it stops being drawn and no longer blocks you. Its model and position are kept, so you can add it back at any time. Nothing is deleted.</p>`), grid);
+    p.querySelector('.cc-actions').append(pills([['all', 'All'], ...Object.entries(cats).map(([k, v]) => [k, `${k} ${v}`])], invCat, (v) => { invCat = v; })); return [p];
   }
-  function environmentPage() { return [$(`<div class="cc-env" id="cc-env-pg"></div>`), $(`<p class="cc-hint">Values marked Unavailable have no connected source. Nothing here is estimated.</p>`)]; }
+  function environmentPage() {
+    const g = $(`<div class="cc-grid env" id="cc-env"></div>`);
+    return [panel('Environment', g, $(`<p class="cc-sub">Values marked Unavailable have no connected source. Nothing here is estimated.</p>`))];
+  }
 
   // ---------- render / refresh ----------
   function render() {
     binds = []; feedEls.splice(0, feedEls.length, ...feedEls.filter((x) => x.size === 'big'));
-    const [, label] = PAGES.find((p) => p[0] === page); title.textContent = label;
-    nav.querySelectorAll('.cc-tab[data-page]').forEach((b) => { if (b.dataset.page === page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    const parts = { overview, cameras: camerasPage, rooms: roomsPage, inventory: inventoryPage, environment: environmentPage }[page]();
-    body.replaceChildren(...parts); body.scrollTop = 0; lastEnv = ''; refresh(true);
+    nav.querySelectorAll('.cc-tab').forEach((b) => { if (b.dataset.page === page) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    const parts = { overview, cameras: camerasPage, rooms: () => [roomsPanel(true)], inventory: inventoryPage, environment: environmentPage }[page]();
+    main.className = 'cc-main' + (page === 'overview' ? ' two' : ''); main.replaceChildren(...parts); lastEnv = ''; refresh(true);
   }
-  function refresh(force) {
-    const snap = devices.snapshot(); const camSnap = cameras.feeds.map((f) => +f.active).join('');
-    if (force || snap !== lastSnap + camSnap) { lastSnap = snap; for (const b of binds) b(); lastSnap = snap; }
-    else for (const b of binds) b();
-    const w = envData(); const e = JSON.stringify(w);
-    if (e !== lastEnv) { lastEnv = e; for (const id of ['cc-env-ov', 'cc-env-pg']) { const t = body.querySelector('#' + id); if (t) t.innerHTML = w.map(envTile).join(''); } }
-    timePill.textContent = weatherInfo().clock;
+  function refresh() {
+    for (const b of binds) b();
+    const w = envData(), e = JSON.stringify(w);
+    if (e !== lastEnv) { lastEnv = e; const t = main.querySelector('#cc-env'); if (t) t.innerHTML = w.map(([k, v, n, ic, tint]) => `<div class="cc-card cc-stat ${TINT[tint][1]}">${icTile(ic, TINT[tint][0])}<div><b>${v}</b><span>${k}<br><small>${n}</small></span></div></div>`).join(''); }
+    const wi = weatherInfo(); timeChip.textContent = wi.clock; wx.innerHTML = `${svg(wi.day ? 'sun' : 'moon')} ${wi.live ? Math.round((wi.tempF - 32) * 5 / 9) + '°C, ' + esc(wi.label) : 'Weather unavailable'}`;
     if (page === 'inventory') { const k = invObjs().map((o) => +o.visible).join(''); const changed = lastInv && k !== lastInv; lastInv = k; if (changed) render(); }
   }
   function go(p) { page = p; big?.remove(); big = null; lastInv = ''; render(); }
   let poll = 0;
-  function open() { if (api.open) return; api.open = true; api.hooks.onOpen?.(); glassShow(root, 'grid'); render(); poll = setInterval(refresh, 250); }
-  function close(relock) { if (!api.open) return; api.open = false; clearInterval(poll); big?.remove(); big = null; feedEls.length = 0; glassHide(root); api.hooks.onClose?.(relock); }
+  function open() { if (api.open) return; api.open = true; api.hooks.onOpen?.(); glassShow(root, 'grid'); closePill.style.display = 'flex'; render(); poll = setInterval(refresh, 250); }
+  function close(relock) { if (!api.open) return; api.open = false; clearInterval(poll); big?.remove(); big = null; feedEls.length = 0; glassHide(root); closePill.style.display = 'none'; api.hooks.onClose?.(relock); }
+  closePill.style.display = 'none';
   openBtn.onclick = open;
   root.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (e.target === root) close(false); });
   addEventListener('keydown', (e) => {
-    if (e.code === 'Tab' && !e.repeat) { if (document.activeElement?.closest('input,textarea') ) return; e.preventDefault(); api.open ? close(true) : open(); }
-    else if (e.code === 'Escape' && api.open) { if (big) { big.remove(); big = null; feedEls.splice(0, feedEls.length, ...feedEls.filter((x) => x.size !== 'big')); } else close(false); }
+    if (e.code === 'Tab' && !e.repeat) { if (document.activeElement === search) return; e.preventDefault(); api.open ? close(true) : open(); }
+    else if (e.code === 'Escape' && api.open) { if (big) { big.remove(); big = null; feedEls.splice(0, feedEls.length, ...feedEls.filter((x) => x.size !== 'big')); } else if (query) { query = ''; search.value = ''; render(); } else close(false); }
   });
   api.close = close; api.openDash = open; api.openBtn = openBtn;
   /** Called every frame by the main loop. */
