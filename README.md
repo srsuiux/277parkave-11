@@ -52,6 +52,12 @@ clouds, stars, street lamps and car headlights switching on at dusk.
 
 ![Feedback mode panel](docs/screenshots/ui-feedback.jpg)
 
+### The refrigerator
+
+| Branded, closed | Open and stocked |
+| --- | --- |
+| ![ARCTICA top-freezer refrigerator, closed](docs/screenshots/11-fridge-brand-closed.jpg) | ![Open fridge with cans, eggs, meat, vegetables and door bins](docs/screenshots/12-fridge-open-stocked.jpg) |
+
 ## Run it
 
 ```bash
@@ -96,6 +102,12 @@ Click the start overlay to capture the mouse (arrow keys also turn your head). `
   side and a deadbolt from the inside (`G`), and a door will not lock while it is open.
 - **Activities** (`src/activity.js`): sit on any chair wherever you placed it (`Y`), use the toilet (lid and seat up/down, flush),
   take a shower (curtain, water), and scroll a phone with a short-video feed while sitting.
+- **Refrigerator** (`src/fixtures/fridge.js`, `fridgefood.js`): an **ARCTICA** top-freezer with a chrome wordmark, door labels and an inside model sticker. It is a hollow cabinet with a
+  liner, glass shelves, two crisper drawers, a freezer shelf and basket, and gasketed doors with bins. Press `E` on each door (hinged on the north edge, swings out, solid while open;
+  it asks you to step back if you stand in its path). The interior light and LED strip come on while a door is open. Inside, all procedural and labelled: Coca-Cola and Pepsi cans
+  and 1 L bottles, water, milk, orange and grape juice, ketchup, mustard, mayo, soy and hot sauce, jam, salsa, pickles, eggs (open carton), butter, yogurt, leftovers,
+  raw chicken and pork on foam trays under cling film, bacon, a frozen chicken and pork shoulder, peas, fish sticks, ice cream and an ice tray, and in the crisper drawers a
+  cabbage, lettuce, broccoli, cucumbers, tomatoes, carrots, peppers and onions. Both doors are Command Center devices ("Refrigerator Door", "Freezer Door").
 - **Appliances and fixtures:** kitchen and bathroom taps, the sink light bulb (mouse wheel), laptop (opens and closes), study monitor (`E` sits you at it: wallpaper
   presets, an image URL or upload, and a media player for YouTube / Spotify / SoundCloud / direct audio and video links, whose sound fades as you walk away),
   gas wall heater with its gas valve, window AC, ceiling fan (3 speeds), curtains, window, bedside table, vanity cupboard, closet light, light switches.
@@ -147,8 +159,8 @@ time chips, and a **Close** pill (`Esc` also closes it, or closes a big camera /
   asset out of the apartment (it stops being drawn and stops blocking you); its model and position are kept, and Add brings it back. Changes are saved like a layout save.
 - **Environment:** live outdoor temperature and weather when the service answers, time, and day/night from the sun. There is no indoor sensor, so
   indoor temperature honestly says **Unavailable**; nothing is fabricated.
-- Only controls that exist in the 3D scene are exposed. The oven and refrigerator are not interactive or electrically modelled yet, so they appear in
-  inventory but have no power controls.
+- Only controls that exist in the 3D scene are exposed. The refrigerator doors are controllable; the oven is not interactive or electrically modelled yet, so it appears in
+  inventory but has no power control.
 
 ## Add an object from first person (`N`)
 
@@ -214,7 +226,7 @@ Handy console hooks: `window.__fp` (`teleport`, `snapshot`, `setTime`, `setWeath
 src/config.js          room sizes, doors, furniture defaults
 src/main.js            scene, loop, interaction, per-room lighting, wiring
 src/shell/             rooms: kitchen, bathroom, bedroom, hallway, walls, winter street view
-src/fixtures/          sink, toilet, stove, fridge, lights, rugs, power outlets…
+src/fixtures/          sink, toilet, stove, fridge (+ fridgefood.js stock), lights, rugs, power outlets…
 src/parts/             doors and hardware
 src/fpbody.js          first-person body: torso, sleeves, IK arms, hands (layer 1, sees only through your eyes)
 src/visitor.js         the visitor's legs and shoes;  src/avatar.js  shared avatar identity (shirt + skin colours)
