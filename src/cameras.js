@@ -12,7 +12,6 @@ const CAMS = [
   { id: 'cam_bedroom', name: 'Bedroom Camera', room: 'Bedroom', pos: [3.05, 2.25, 4.2], look: [-0.2, 0.7, 6.6], fov: 68 },
   { id: 'cam_kitchen', name: 'Kitchen Camera', room: 'Kitchen', pos: [2.9, 2.25, 0.25], look: [0.6, 0.8, 3.0], fov: 70 },
   { id: 'cam_entrance', name: 'Main Entrance Camera', room: 'Hallway', pos: [0.9, 2.2, -4.35], look: [1.0, 1.1, -0.2], fov: 62 },
-  { id: 'cam_bath', name: 'Bathroom Camera', room: 'Bathroom', pos: [-0.25, 2.25, 0.2], look: [-1.3, 0.8, 3.0], fov: 74, defaultActive: false },
 ];
 
 const VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
