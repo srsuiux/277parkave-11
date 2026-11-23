@@ -4,6 +4,7 @@ import { box } from '../materials.js';
 import { buildWall } from './wall.js';
 import { createDoor } from '../parts/door.js';
 import { std, wood, mk, bx, rb, cyl, finish, makeRadiator } from '../fixtures/furniture.js';
+import { buildStorageTable } from '../fixtures/storagetable.js';
 import { buildBathRug } from '../fixtures/bathrug.js';
 import { paintable } from '../paint.js';
 import { buildSocketPlate } from '../fixtures/power.js';
@@ -38,7 +39,7 @@ export function buildBedroom(mats) {
   };
   // north wall: the kitchen's south wall (with the bedroom door) covers x 0..3; on the left the bathroom's outside wall is dressed in bedroom paint (offset 4 mm so the faces never z-fight)
   wall('wall-N-left', [x0, 0, z0 + 0.004], 0, -t - x0, 0);
-  wall('wall-N-right', [W + t, 0, z0], 0, x1 - (W + t), t);
+  wall('wall-N-right', [W + t, 0, z0 + 0.004], 0, x1 - (W + t), t);
   wall('wall-S', [x1, 0, z1], Math.PI, x1 - x0, t);
   // west wall: glass window
   const wu = z1 - winZ;
@@ -55,7 +56,7 @@ export function buildBedroom(mats) {
   // ---------------- closet room ----------------
   const closet = new THREE.Group(); closet.name = 'closet'; closet.userData.label = 'Closet / storage room'; root.add(closet);
   const cwall = (name, pos, rotY, length, ext) => { const w = buildWall({ length, height: H, t, ext, mat: mats.kitchenWall, mats }); w.name = name; w.position.set(...pos); w.rotation.y = rotY; closet.add(w); };
-  cwall('closet-wall-N', [cx0, 0, cz0], 0, cl.w, t); cwall('closet-wall-S', [cx1, 0, cz1], Math.PI, cl.w, t); cwall('closet-wall-E', [cx1, 0, cz0], -Math.PI / 2, cl.d, 0);
+  cwall('closet-wall-N', [cx0, 0, cz0], 0, cl.w, t - 0.006); cwall('closet-wall-S', [cx1, 0, cz1], Math.PI, cl.w, t - 0.006); cwall('closet-wall-E', [cx1, 0, cz0], -Math.PI / 2, cl.d, 0);
   const cfloor = box(cl.w + t * 2, 0.06, cl.d + t * 2, mats.floor, { tile: 1 }); cfloor.position.set((cx0 + cx1) / 2, -0.03, (cz0 + cz1) / 2); closet.add(cfloor);
   const cceil = box(cl.w + t * 2, 0.08, cl.d + t * 2, mats.ceiling); cceil.position.set((cx0 + cx1) / 2, H + 0.04, (cz0 + cz1) / 2); closet.add(cceil);
   const cl1 = new THREE.PointLight(0xffe2b8, 2.4, 0, 2); cl1.position.set((cx0 + cx1) / 2, H - 0.3, (cz0 + cz1) / 2); closet.add(cl1);
@@ -102,21 +103,31 @@ export function buildBedroom(mats) {
   const place = (g, x, z, rotDeg = 0, y = 0) => { g.position.set(x, y, z); g.rotation.y = THREE.MathUtils.degToRad(rotDeg); out.push(g); return g; };
 
   // --- two single mattresses, each with pillow + blanket ---
-  const bed = (id, label, blanketHex) => {
-    const g = new THREE.Group(), L = 1.95, Bw = 0.95;
+  const bed = (id, label, blanketHex, stacked = false) => {
+    const g = new THREE.Group(), L = 1.95, Bw = 0.95, up = stacked ? 0.15 : 0;
     const mat = std(0xf0ece2, 0.95), pil = std(0xffffff, 0.9), bl = std(blanketHex, 0.95), base = std(0x5a4636, 0.7);
     bx(g, Bw - 0.05, 0.03, L - 0.05, base, 'bed-base', 0, 0.015, 0);
-    rb(g, Bw, 0.2, L, 0.05, mat, 'mattress', 0, 0.13, 0);
-    rb(g, 0.52, 0.12, 0.34, 0.05, pil, 'pillow', 0, 0.29, -L / 2 + 0.28);
-    rb(g, Bw + 0.03, 0.06, 1.3, 0.03, bl, 'blanket', 0, 0.255, 0.3);
-    for (const s of [-1, 1]) rb(g, 0.035, 0.2, 1.3, 0.016, bl, 'blanket-drape', s * (Bw / 2 + 0.012), 0.16, 0.3);
-    rb(g, Bw + 0.03, 0.05, 0.2, 0.02, bl, 'blanket-fold', 0, 0.3, -0.36);
-    rb(g, Bw + 0.03, 0.2, 0.05, 0.016, bl, 'blanket-foot', 0, 0.16, 0.3 + 0.65);
-    finish(g, id, label, Bw + 0.06, 0.36, L);
-    return paintable(g, [{ label: 'Blanket', mats: [bl] }, { label: 'Mattress', mats: [mat] }, { label: 'Pillow', mats: [pil] }]);
+    // stacked: a firm lower mattress with the softer sleeping mattress on top; each has its own seam, piping and tone
+    const lowM = std(0xbdb8aa, 0.95), seam = std(0x8f8a7c, 0.9);
+    if (stacked) {
+      rb(g, Bw, 0.15, L, 0.045, lowM, 'mattress-lower', 0, 0.105, 0);
+      rb(g, Bw + 0.004, 0.012, L + 0.004, 0.005, seam, 'mattress-lower-piping', 0, 0.185, 0);
+      rb(g, Bw - 0.03, 0.17, L - 0.04, 0.05, mat, 'mattress', 0, 0.29, 0);
+      rb(g, Bw - 0.026, 0.01, L - 0.036, 0.004, seam, 'mattress-upper-piping', 0, 0.2, 0);
+    } else rb(g, Bw, 0.2, L, 0.05, mat, 'mattress', 0, 0.13, 0);
+    rb(g, 0.52, 0.12, 0.34, 0.05, pil, 'pillow', 0, 0.29 + up, -L / 2 + 0.28);
+    rb(g, Bw + 0.03, 0.06, 1.3, 0.03, bl, 'blanket', 0, 0.255 + up, 0.3);
+    for (const s of [-1, 1]) rb(g, 0.035, 0.2, 1.3, 0.016, bl, 'blanket-drape', s * (Bw / 2 + 0.012), 0.16 + up, 0.3);
+    rb(g, Bw + 0.03, 0.05, 0.2, 0.02, bl, 'blanket-fold', 0, 0.3 + up, -0.36);
+    rb(g, Bw + 0.03, 0.2, 0.05, 0.016, bl, 'blanket-foot', 0, 0.16 + up, 0.3 + 0.65);
+    finish(g, id, label, Bw + 0.06, 0.36 + up, L);
+    return paintable(g, [{ label: 'Blanket', mats: [bl] }, { label: 'Mattress', mats: [mat] }, ...(stacked ? [{ label: 'Lower mattress', mats: [lowM] }] : []), { label: 'Pillow', mats: [pil] }]);
   };
   place(bed('bed-1', "Roommate's mattress (single, with blanket)", 0x7a8fb0), cxm - 0.65, z1 - 0.02 - 0.975, 180);
-  place(bed('bed-2', 'My mattress (single, with blanket)', 0xb08a7a), cxm + 0.45, z1 - 0.02 - 0.975, 180);
+  place(bed('bed-2', 'My bed (two stacked mattresses, with blanket)', 0xb08a7a, true), cxm + 0.45, z1 - 0.02 - 0.975, 180);
+
+  // --- bedside storage table with a hinged lid, beside my bed next to the east-wall USB outlet ---
+  place(buildStorageTable(), x1 - 0.23, 6.12, -90);
 
   // --- small brown sofa ---
   {
@@ -140,11 +151,8 @@ export function buildBedroom(mats) {
     bx(g, Tw - 0.1, 0.1, 0.02, dark, 'table-apron', 0, Th - 0.1, -Td / 2 + 0.04);
     bx(g, 0.4, 0.12, Td - 0.08, dark, 'table-drawer', Tw / 2 - 0.3, Th - 0.1, 0); bx(g, 0.08, 0.02, 0.02, std(0xc9a24a, 0.3, 0.8), 'drawer-pull', Tw / 2 - 0.3, Th - 0.1, Td / 2 - 0.035);
     for (let i = 0; i < 3; i++) rb(g, 0.2 - i * 0.02, 0.03, 0.15, 0.006, std([0x3f5a80, 0x8a3f3f, 0x4a6b4a][i], 0.8), 'book', -0.35, Th + 0.015 + i * 0.03, -0.12);
-    const lampMat = std(0xf2e6c8, 0.7); lampMat.emissive = new THREE.Color(0xffd9a0); lampMat.emissiveIntensity = 0.5;
-    cyl(g, 0.06, 0.07, 0.015, std(0x222222, 0.4, 0.6), 'lamp-base', 0.38, Th + 0.008, -0.15, null, 16); cyl(g, 0.006, 0.006, 0.3, std(0x222222, 0.4, 0.6), 'lamp-stem', 0.38, Th + 0.16, -0.15, null, 8);
-    cyl(g, 0.04, 0.08, 0.1, lampMat, 'lamp-shade', 0.38, Th + 0.32, -0.15, null, 16);
-    finish(g, 'study-table', 'Study table (small)', Tw, Th + 0.4, Td);
-    paintable(g, [{ label: 'Table top', mats: [top] }, { label: 'Frame', mats: [dark] }, { label: 'Lamp shade', mats: [lampMat] }]);
+    finish(g, 'study-table', 'Study table (small)', Tw, Th + 0.1, Td);
+    paintable(g, [{ label: 'Table top', mats: [top] }, { label: 'Frame', mats: [dark] }]);
     place(g, -0.65, z0 + 0.02 + Td / 2, 0);
     const ch = new THREE.Group(), cw = wood('#6b4a2e', '#2a180c'), seatM = std(0x8a6a4a, 0.8);
     bx(ch, 0.4, 0.04, 0.4, seatM, 'seat', 0, 0.45, 0);
@@ -200,13 +208,16 @@ export function buildBedroom(mats) {
     }
     bx(g, 0.1, 0.05, 0.004, tag('WATER', '#1d5fa8', '#ffffff'), 'water-tag', 0.042, 1.2, 0.004);
     // gas: its own small yellow pipe, separate from the water pipes - up from the floor, a ball elbow, then across through the valve to the heater
-    const GX = 0.15;
-    cyl(g, 0.0115, 0.0115, 0.5, yellow, 'gas-pipe', GX, 0.25, Zp, null, 20);
+    // (pipes stand on the sofa side of the heater; local -x points at the heater, so the gas line runs under it and up into its bottom)
+    const GX = 0.15, GY = 0.62, HX = -0.38, HY = 0.86;
+    cyl(g, 0.0115, 0.0115, GY, yellow, 'gas-pipe', GX, GY / 2, Zp, null, 20);
     cyl(g, 0.026, 0.026, 0.008, steel, 'gas-floor-collar', GX, 0.004, Zp, null, 24);
-    mk(g, new THREE.SphereGeometry(0.0165, 20, 14), yellow, 'gas-elbow', GX, 0.5, Zp);
-    cyl(g, 0.0115, 0.0115, 0.14, yellow, 'gas-pipe-to-heater', GX + 0.07, 0.5, Zp, [0, 0, Math.PI / 2], 20);
-    bx(g, 0.05, 0.02, 0.004, tag('GAS', '#e3b212', '#222222'), 'gas-tag', GX, 0.62, 0.004);
-    const valve = new THREE.Group(); valve.position.set(GX + 0.075, 0.5, Zp); g.add(valve);
+    mk(g, new THREE.SphereGeometry(0.0165, 20, 14), yellow, 'gas-elbow', GX, GY, Zp);
+    cyl(g, 0.0115, 0.0115, GX - HX, yellow, 'gas-pipe-to-heater', (GX + HX) / 2, GY, Zp, [0, 0, Math.PI / 2], 20);
+    mk(g, new THREE.SphereGeometry(0.0165, 20, 14), yellow, 'gas-elbow-2', HX, GY, Zp);
+    cyl(g, 0.0115, 0.0115, HY - GY, yellow, 'gas-pipe-up', HX, (HY + GY) / 2, Zp, null, 20);
+    bx(g, 0.05, 0.02, 0.004, tag('GAS', '#e3b212', '#222222'), 'gas-tag', GX, 0.75, 0.004);
+    const valve = new THREE.Group(); valve.position.set(-0.1, GY, Zp); g.add(valve);
     mk(valve, new THREE.SphereGeometry(0.02, 28, 18), brassM, 'valve-body', 0, 0, 0);
     cyl(valve, 0.012, 0.012, 0.03, brassM, 'valve-bonnet', 0, 0, 0.02, [Math.PI / 2, 0, 0], 28); cyl(valve, 0.015, 0.015, 0.01, brassM, 'valve-nut', 0, 0, 0.002, [Math.PI / 2, 0, 0], 6);
         const lever = new THREE.Group(); lever.position.z = 0.038; valve.add(lever);
