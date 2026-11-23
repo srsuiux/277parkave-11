@@ -8,8 +8,9 @@ import { box } from '../materials.js';
  * `ext`: extra body length past each end (to cover corners).
  */
 export function buildWall({ length, height, t, ext = 0, openings = [], mat, mats, baseboard = true, crown = true }) {
+  ext = Math.max(ext, 0.03);   // always overlap into the neighbouring wall: a butt joint leaves a hairline crack at the corner that shows the lit outer face behind it
   const g = new THREE.Group();
-  const wallMat = mat.clone(); g.userData.isWall = true; g.userData.wallMat = wallMat;   // every wall owns its material so it can be painted on its own
+  const wallMat = mat.clone(); wallMat.shadowSide = THREE.FrontSide; /* thin walls: the default back-face shadow pass lets light leak through at corners */ g.userData.isWall = true; g.userData.wallMat = wallMat;   // every wall owns its material so it can be painted on its own
   const ops = [...openings].sort((a, b) => a.u0 - b.u0);
 
   const add = (u0, u1, y0, y1, collide = false) => {
