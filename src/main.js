@@ -28,6 +28,7 @@ import { monitor, initMonitorUI } from './monitor.js';
 import { initDevices } from './devices.js';
 import { initCameras } from './cameras.js';
 import { initDashboard } from './dashboard.js';
+import { initPlacer } from './placer.js';
 import { setFixtureEnv } from './fixtures/mats.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -307,19 +308,22 @@ const dash = initDashboard({
   weatherInfo: () => ({ live: weather.loaded && weather.source !== 'default', tempF: weather.tempF, label: weather.label, clock: clockText(), zone: LOCATION.tz, simulated: dayEnv.override != null, day: dayEnv.sunElev > -4, phase: phaseName() }),
   hooks: { onOpen: () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; }, onClose: (relock) => { if (relock) controls.lock(); else startEl.style.display = 'grid'; } },
 });
+const placer = initPlacer({ scene, camera, layout, toast: (t, s) => activities.toast(t, s),
+  hooks: { onOpen: () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; }, onClose: (relock) => { if (relock) controls.lock(); else startEl.style.display = 'grid'; } } });
 startEl.addEventListener('click', () => controls.lock());
 controls.addEventListener('lock', () => { startEl.style.display = 'none'; dash.openBtn.style.display = 'none'; });
-controls.addEventListener('unlock', () => { startEl.style.display = fb.state.edit || layout.state.on || monitor.open || paintUI.open || dash.open ? 'none' : 'grid'; dash.openBtn.style.display = ''; });
+controls.addEventListener('unlock', () => { startEl.style.display = fb.state.edit || layout.state.on || monitor.open || paintUI.open || dash.open || placer.open ? 'none' : 'grid'; dash.openBtn.style.display = ''; });
 
 const keys = new Set();
 addEventListener('keydown', (e) => {
-  if (fb.isTyping(e) || monitor.open || paintUI.open || dash.open) return;
+  if (fb.isTyping(e) || monitor.open || paintUI.open || dash.open || placer.open) return;
   keys.add(e.code);
   if (!layout.state.on && !fb.state.edit) {
     if (e.code === 'KeyY') { if (activities.active) activities.stop(); else { const it = lookedAt()?.item; if (it?.userData.seat) activities.sit(it); else activities.useNearby(); } }
     if (e.code === 'KeyQ' && lookedAt()?.door === bathDoor) toggleBolt();
     if (e.code === 'KeyG') entryLockAction();
     if (e.code === 'KeyH') cycleHands();
+    if (e.code === 'KeyN' && !e.repeat) placer.openPicker();
     if (e.code === 'Space' && activities.active) { activities.scroll(1); e.preventDefault(); }
   }
   if (e.code === 'KeyE' && !layout.state.on && !fpBody.busy) toggleDoor();
@@ -602,4 +606,4 @@ async function snapshot(name = 'snapshot-' + new Date().toISOString().replace(/[
 }
 addEventListener('keydown', (e) => { if (e.code === 'KeyP' && !e.repeat && !fb.isTyping(e) && !paintUI.open && !layout.state.on) snapshot(); });
 
-window.__fp = { dash, devices, cameras, inside: insideApartment, setTime(ms) { dayEnv.override = ms; }, setWeather: (o) => Object.assign(weather, o), snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };
+window.__fp = { placer, dash, devices, cameras, inside: insideApartment, setTime(ms) { dayEnv.override = ms; }, setWeather: (o) => Object.assign(weather, o), snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };

@@ -41,8 +41,8 @@ const I = {
   power: 'M12 2v10 M18.4 6.6a9 9 0 1 1-12.77.04', clock: 'M12 6v6l4 2 M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
   shield: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
 };
-const svg = (n, cls = '') => `<svg class="cc-ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${(I[n] ?? I.box).split(' M').map((d, i) => `<path d="${i ? 'M' : ''}${d}"/>`).join('')}</svg>`;
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+export const svg = (n, cls = '') => `<svg class="cc-ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${(I[n] ?? I.box).split(' M').map((d, i) => `<path d="${i ? 'M' : ''}${d}"/>`).join('')}</svg>`;
+export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const CATS = [
   ['Bathroom fixtures', /toilet|bath|vanity|shower|mirror|plug|towel/i],
@@ -51,12 +51,12 @@ const CATS = [
   ['Furniture', /bed|sofa|chair|table|dresser|bookshelf|shelf|desk|closet|radiator|cabinet|bin|nightstand/i],
   ['Personal belongings', /diary|suitcase|rug|curtain|book|bag|clothes|towel/i],
 ];
-const catOf = (o) => { const t = o.name + ' ' + (o.userData.label ?? ''); return CATS.find(([, re]) => re.test(t))?.[0] ?? 'Other assets'; };
-const CAT_ICON = { 'Bathroom fixtures': 'drops', 'Kitchen appliances': 'flame', Electronics: 'laptop', Furniture: 'sofa', 'Personal belongings': 'box', 'Other assets': 'box' };
+export const catOf = (o) => { const t = o.name + ' ' + (o.userData.label ?? ''); return CATS.find(([, re]) => re.test(t))?.[0] ?? 'Other assets'; };
+export const CAT_ICON = { 'Bathroom fixtures': 'drops', 'Kitchen appliances': 'flame', Electronics: 'laptop', Furniture: 'sofa', 'Personal belongings': 'box', 'Other assets': 'box' };
 const POWERISH = ['power_toggle', 'fan_speed', 'water_flow', 'connection'];
 
 const TINT = { teal: ['#2f8591', 'tint-teal'], coral: ['#cf4b4b', 'tint-coral'], salmon: ['#c76b57', 'tint-salmon'], sage: ['#2d8a64', 'tint-sage'] };
-const CAT_COLOR = { lighting: '#d98a3d', climate: '#cf4b4b', plumbing: '#2f8591', openings: '#5a6fa8', electronics: '#5a6fa8', furniture: '#c0794a', 'Kitchen appliances': '#cf4b4b', 'Bathroom fixtures': '#2f8591', Electronics: '#5a6fa8', Furniture: '#c0794a', 'Personal belongings': '#7d62b0', 'Other assets': '#6b7280' };
+export const CAT_COLOR = { lighting: '#d98a3d', climate: '#cf4b4b', plumbing: '#2f8591', openings: '#5a6fa8', electronics: '#5a6fa8', furniture: '#c0794a', 'Kitchen appliances': '#cf4b4b', 'Bathroom fixtures': '#2f8591', Electronics: '#5a6fa8', Furniture: '#c0794a', 'Personal belongings': '#7d62b0', 'Other assets': '#6b7280' };
 
 export function initDashboard({ devices, cameras, layout, renderer, scene, weatherInfo, clock, hooks }) {
   const $ = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstElementChild; };
