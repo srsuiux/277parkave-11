@@ -109,6 +109,10 @@ export function initDevices({ scene, doors, operateDoor }) {
   persisted(byName('bath-vanity'), { id: 'vanity_cupboard', name: 'Sink Cupboard', category: 'furniture', room: 'bathroom', icon: 'archive', capabilities: ['open_close'], read: (v) => ({ open: !!v }),
     controls: [toggle('open_close', 'Door', (s) => s.open, null, (s) => (s.open ? 'OPEN' : 'CLOSED'))] });
 
+  for (const [nm, id, label] of [['fridge-door-lower', 'fridge_door', 'Refrigerator Door'], ['fridge-door-freezer', 'freezer_door', 'Freezer Door']])
+    persisted(byName(nm), { id, name: label, category: 'appliance', room: 'kitchen', icon: 'archive', capabilities: ['open_close'], read: (v) => ({ open: !!v }),
+      controls: [toggle('open_close', 'Door', (s) => s.open, null, (s) => (s.open ? 'OPEN' : 'CLOSED'))] });
+
   // ---- doors -----------------------------------------------------------------------------------------------------------
   const DOOR_META = { 'north-door': ['Entrance Door', 'entrance'], 'living-room-door': ['Bedroom Door', 'bedroom'], 'bathroom-door': ['Bathroom Door', 'bathroom'], 'closet-door': ['Closet Door', 'bedroom'] };
   for (const d of doors) {
@@ -128,7 +132,7 @@ export function initDevices({ scene, doors, operateDoor }) {
     bedroom_curtains: (v, on) => (on ? 1 : 0), bedroom_window: (v, on) => v.map(() => (on ? 1 : 0)),
     bedroom_ac: (v, on) => on, bedroom_heater: (v, on) => on, gas_valve: (v, on) => on, closet_light: (v, on) => on, bedside_table: (v, on) => on,
     kitchen_sink: (v, on) => [on, on], bathroom_sink: (v, on) => [on, on],
-    laptop: (v, on) => on, vanity_cupboard: (v, on) => on,
+    laptop: (v, on) => on, vanity_cupboard: (v, on) => on, fridge_door: (v, on) => on, freezer_door: (v, on) => on,
     shower: (v, on) => ({ ...v, hot: on, cold: on }), shower_curtain: (v, on) => ({ ...v, c: on ? 1 : 0 }),
     toilet_lid: (v, on) => [on, v[1]], toilet_seat: (v, on) => [v[0], on],
   };
