@@ -8,8 +8,10 @@ import { visitor } from '../visitor.js';
 import { buildBathRugs } from '../fixtures/bathrug.js';
 import { buildToilet } from '../fixtures/toilet.js';
 import { buildScrewBulb } from '../fixtures/lights.js';
+import { click } from '../audio.js';
 import { fixtureMats } from '../fixtures/mats.js';
-import { buildSink, SINK } from '../fixtures/sink.js';
+import { buildCeramicSink } from '../fixtures/ceramicsink.js';
+import { buildVanityCabinet } from '../fixtures/vanity.js';
 
 /**
  * The bathroom (IMG_1293-1298), west of the kitchen. Shell: floor, ceiling, 3 walls + a lining on the kitchen wall,
@@ -86,9 +88,9 @@ export function buildBathroom(mats) {
   // ---------- walls ----------
   const wz = B.window.z, ww = B.window.w;
   const frames = {
-    N: { pos: [x0, 0, z0], rotY: 0, length: x1 - x0, ext: t, ops: [] },
+    N: { pos: [x0, 0, z0], rotY: 0, length: x1 - x0, ext: t - 0.006, ops: [] },
     W: { pos: [x0, 0, z1], rotY: Math.PI / 2, length: z1 - z0, ext: 0, ops: [{ u0: z1 - wz - ww / 2, u1: z1 - wz + ww / 2, y0: B.window.sill, y1: B.window.top, win: true }] },
-    S: { pos: [x1, 0, z1], rotY: Math.PI, length: x1 - x0, ext: t, ops: [] },
+    S: { pos: [x1, 0, z1 + 0.008], rotY: Math.PI, length: x1 - x0, ext: t, ops: [] },
     E: { pos: [x1 - 0.004, 0, z0], rotY: -Math.PI / 2, length: z1 - z0, ext: 0, lining: true, ops: [{ u0: 3.25 - 0.43 - z0, u1: 3.25 + 0.43 - z0, y0: 0, y1: 2.05 }] },
   };
   const walls = new THREE.Group(); walls.name = 'walls';
@@ -265,23 +267,10 @@ export function buildBathroom(mats) {
     { const g = makeRadiator({ id: 'bath-radiator', label: 'Bathroom radiator (white cast iron, 6 sections)', n: 6, W: 0.46, H: 0.64, color: 0xe7e5dc });
       g.rotation.y = Math.PI / 2; g.position.set(x0 + 0.02 + 0.06, 0, z0 + 1.0); out.push(g);
       const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.8, 10), std(0xdad4be, 0.6)); pipe.rotation.x = Math.PI / 2; pipe.position.set(x0 + 0.03, 0.1, z0 + 2.0); pipe.name = 'wall-pipe'; out.push(pipe); }
-    // --- vanity: wood cabinet, white cultured-marble top with oval basin, chrome centerset faucet ---
-    { const g = new THREE.Group(), W = 0.6, D = 0.45, oak = wood('#9a5a28', '#4a2a10'), oak2 = wood('#a8662f', '#563214');
-      bx(g, W, 0.72, D, oak, 'vanity-carcass', 0, 0.36, 0);
-      bx(g, W - 0.04, 0.11, 0.025, oak2, 'vanity-drawer-front', 0, 0.665, D / 2 + 0.006);
-      for (const s of [-1, 1]) { bx(g, W / 2 - 0.03, 0.5, 0.025, oak2, 'vanity-door', s * (W / 4), 0.31, D / 2 + 0.006); bx(g, W / 2 - 0.09, 0.4, 0.012, wood('#b87438', '#563214'), 'door-raised-panel', s * (W / 4), 0.31, D / 2 + 0.02); mk(g, new THREE.SphereGeometry(0.011, 12, 8), std(0xd7d2c3, 0.35, 0.6), 'door-knob', s * 0.022, 0.5, D / 2 + 0.03); }
-      // granite top (same stone as the kitchen counter) with a hole for the stainless drop-in sink; the sink is the kitchen's,
-      // scaled down to fit, with the same hot + cold cross handles, faucet, running water and sound.
-      const tw = W + 0.04, td = D + 0.04, SC = 0.78, M = fixtureMats();
-      const sinkZ = -td / 2 + 0.03 * SC + SINK.rimD * SC / 2, bw = (SINK.bowlW + 0.012) * SC, bd = (SINK.bowlD + 0.012) * SC;
-      const shape = new THREE.Shape(); shape.moveTo(-tw / 2, -td / 2); shape.lineTo(tw / 2, -td / 2); shape.lineTo(tw / 2, td / 2); shape.lineTo(-tw / 2, td / 2); shape.closePath();
-      const hole = new THREE.Path(); hole.moveTo(-bw / 2, -(sinkZ - bd / 2)); hole.lineTo(bw / 2, -(sinkZ - bd / 2)); hole.lineTo(bw / 2, -(sinkZ + bd / 2)); hole.lineTo(-bw / 2, -(sinkZ + bd / 2)); hole.closePath();   // shape y = -z after the rotation shape.holes.push(hole);
-      const topG = new THREE.ExtrudeGeometry(shape, { depth: 0.035, bevelEnabled: true, bevelSize: 0.003, bevelThickness: 0.003, bevelSegments: 1 }); topG.rotateX(-Math.PI / 2);
-      const top = mk(g, topG, M.granite, 'vanity-top', 0, 0.725, 0); top.userData.label = 'Granite top (like the kitchen counter)';
-      bx(g, tw, 0.05, 0.02, M.granite, 'backsplash', 0, 0.8, -D / 2 - 0.01);
-      const sink = buildSink('Bathroom sink (stainless, hot + cold)'); sink.scale.setScalar(SC); sink.position.set(0, 0.76, sinkZ); g.add(sink);
-      out.push(finish(g, 'vanity', 'Bathroom vanity (oak, granite top, stainless sink with hot + cold)', W + 0.04, 0.82, D + 0.04));
-      g.position.set(-1.32, 0, z1 - 0.02 - 0.225 - 0.0); g.rotation.y = Math.PI; }
+    // --- wall-hung white ceramic sink (as in the owner's photo): glossy china slab + oval basin + tapered skirt, chrome 4" centerset faucet ---
+    { const g = buildCeramicSink(); const { w, d } = g.userData.size; g.rotation.y = Math.PI; g.position.set(-1.453, 0, z1 - 0.012 - d / 2);
+      g.add(buildVanityCabinet({ sinkW: w, sinkD: d, top: g.userData.size.top }));   // wooden cupboard under the (unchanged) sink; moves with it
+      g.userData.wallMount = true; finish(g, 'bath-sink', 'Bathroom sink on wooden vanity (white ceramic, hot + cold)', w, 0.82, d); out.push(g); }
     // --- small white cabinet between the door and the vanity ---
     { const g = new THREE.Group(), W = 0.46, D = 0.38, white = std(0xf1f0ea, 0.4);
       bx(g, W, 0.78, D, white, 'cabinet-carcass', 0, 0.39, 0); bx(g, W - 0.06, 0.62, 0.016, std(0xe6e5de, 0.4), 'cabinet-door', 0, 0.38, D / 2 + 0.004);
@@ -323,14 +312,84 @@ export function buildBathroom(mats) {
     return out;
   }
 
+  /**
+   * The bathroom light is a plug-in sconce: no switch. A cord runs from the sconce to a power port beside the mirror and the light is
+   * on only while the plug sits in that port. Look at the plug and press E to pull it out / push it back in.
+   * (Local frame: x along the wall, y up, +z out of the wall. The group faces into the room.)
+   */
   function sconce() {
-    const g = new THREE.Group(); g.name = 'bath-sconce'; g.userData.label = 'Wall sconce (grey, rotate the bulb)';
-    const gr = std(0x8f969c, 0.4, 0.5), dark = std(0x2b2d30, 0.5, 0.4);
+    const g = new THREE.Group(); g.name = 'bath-sconce'; g.userData.label = 'Plug-in wall sconce (grey) with power port and cord';
+    const gr = std(0x8f969c, 0.4, 0.5), dark = std(0x2b2d30, 0.5, 0.4), ivory = std(0xe9e5d6, 0.5), slot = std(0x050505, 0.9), brass = std(0xc9a24a, 0.3, 0.9), cordM = std(0xe6e3da, 0.6);
     rb(g, 0.09, 0.11, 0.025, 0.02, gr, 'sconce-backplate', 0, 0, 0.0125);
     cyl(g, 0.014, 0.016, 0.07, gr, 'sconce-arm', 0, 0, 0.06, [Math.PI / 2, 0, 0], 12);
     mk(g, new THREE.SphereGeometry(0.026, 14, 10), gr, 'sconce-elbow', 0, 0, 0.095);
     cyl(g, 0.02, 0.022, 0.07, dark, 'sconce-socket', 0, 0.045, 0.095, null, 14);
-    const bulb = buildScrewBulb({ theta0: 300 }); bulb.position.set(0, 0.08, 0.095); g.add(bulb);
+    // cord grommet where the cable leaves the base of the sconce
+    cyl(g, 0.007, 0.008, 0.012, dark, 'cord-grommet', 0, -0.058, 0.03, null, 10);
+
+    // ---- electrical state: the plug IS the switch ----
+    const st = { u: 0, target: 0, delay: 0, power: 1 };    // u: 0 = plug in the port, 1 = hanging free
+    const bulb = buildScrewBulb({ theta0: 300, power: () => st.power }); bulb.position.set(0, 0.08, 0.095); g.add(bulb);
+
+    // ---- power port beside the mirror (world x -1.0, y 1.30) ----
+    const PX = 0.28, PY = -0.22;
+    const port = new THREE.Group(); port.name = 'light-power-port'; port.userData.label = 'Power port (bathroom light)'; port.position.set(PX, PY, 0); g.add(port);
+    rb(port, 0.075, 0.12, 0.008, 0.006, ivory, 'port-plate', 0, 0, 0.004);
+    const face = rb(port, 0.04, 0.05, 0.002, 0.004, std(0xdad6c6, 0.6), 'port-face', 0, 0, 0.0085); void face;
+    for (const s of [-1, 1]) bx(port, 0.0035, 0.013, 0.003, slot, 'port-slot', s * 0.008, 0.004, 0.0095);
+    cyl(port, 0.0035, 0.0035, 0.003, slot, 'port-ground', 0, -0.013, 0.0095, [Math.PI / 2, 0, 0], 8);
+    for (const y of [0.048, -0.048]) cyl(port, 0.0045, 0.0045, 0.002, std(0xbfb9a8, 0.5, 0.5), 'port-screw', 0, y, 0.0085, [Math.PI / 2, 0, 0], 10);
+
+    // ---- plug: prongs point to -z, cord leaves from the rear-bottom ----
+    const plug = new THREE.Group(); plug.name = 'light-plug'; plug.userData.label = 'Light plug';
+    rb(plug, 0.036, 0.05, 0.028, 0.008, ivory, 'plug-body', 0, 0, 0.026);
+    rb(plug, 0.03, 0.044, 0.006, 0.003, std(0xd8d4c4, 0.5), 'plug-collar', 0, 0, 0.0095);
+    for (const s of [-1, 1]) bx(plug, 0.0032, 0.013, 0.02, brass, 'plug-prong', s * 0.008, 0.004, -0.004);
+    bx(plug, 0.003, 0.003, 0.018, brass, 'plug-ground-pin', 0, -0.013, -0.003);
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.08, 0.07), new THREE.MeshBasicMaterial({ visible: false })); hit.visible = false; hit.position.set(0, 0, 0.025); hit.name = 'plug-hit'; plug.add(hit);
+    g.add(plug);
+    const ANCH = new THREE.Vector3(0, -0.02, 0.04);          // where the cord enters the plug (plug-local)
+    const cord = new THREE.Mesh(new THREE.BufferGeometry(), cordM); cord.name = 'light-cord'; cord.castShadow = true; g.add(cord);
+    const S = new THREE.Vector3(0, -0.062, 0.03);            // cord start at the sconce base
+    const E_HANG = new THREE.Vector3(0.1, -0.5, 0.06);       // where the cord end hangs when unplugged
+    const LEN = 0.56;                                        // cord length
+    const P0 = new THREE.Vector3(PX, PY, 0.0095), P1 = new THREE.Vector3(PX, PY - 0.012, 0.15);
+    const ease = (x) => x * x * (3 - 2 * x), lerp = (a, b, t) => a + (b - a) * t;
+    const tmpE = new THREE.Vector3(), tmpA = new THREE.Vector3(), eul = new THREE.Euler();
+    function pose() {
+      const u = st.u, s1 = ease(Math.min(1, u / 0.35)), s2 = ease(Math.max(0, (u - 0.35) / 0.65));
+      // hanging pose: plug upside-down-ish (prongs down), cord end at E_HANG
+      const th = -Math.PI / 2 * s2; eul.set(th, 0, 0); plug.rotation.copy(eul);
+      const hangPos = tmpA.copy(ANCH).applyEuler(new THREE.Euler(-Math.PI / 2, 0, 0)).multiplyScalar(-1).add(E_HANG).clone();
+      const pos = new THREE.Vector3().lerpVectors(P0, P1, s1); pos.lerp(hangPos, s2); plug.position.copy(pos);
+      // cord: from the sconce base to the plug anchor, with slack that sags under gravity (never past the length)
+      const E = tmpE.copy(ANCH).applyEuler(eul).add(plug.position);
+      const d = Math.max(0.02, E.distanceTo(S)), sag = Math.sqrt(Math.max(0, 3 * d * Math.max(0, LEN - d) / 8));
+      const pts = [];
+      for (let i = 0; i <= 14; i++) {
+        const t = i / 14, p = new THREE.Vector3().lerpVectors(S, E, t), bow = 4 * t * (1 - t);
+        p.y -= sag * bow * 0.9; p.x += sag * bow * 0.25; p.z = Math.max(0.034, p.z + 0.012 * bow);   // stays off the wall and the tile rail
+        if (i === 0) p.copy(S); pts.push(p);
+      }
+      cord.geometry.dispose(); cord.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 28, 0.0034, 6, false);
+    }
+    pose();
+    const inPort = () => st.u < 0.08 && st.target === 0;
+    plug.userData.interact = {
+      reach: 'grab',
+      prompt: () => st.target === 0 ? '<kbd>E</kbd> pull the plug out (light off)' : '<kbd>E</kbd> plug the light back in',
+      run: () => { st.target = 1 - st.target; st.delay = 0.5; },   // the hand gets there first, then the plug moves
+    };
+    g.userData.update = (dt) => {
+      if (st.delay > 0) st.delay -= dt;
+      else if (st.u !== st.target) {
+        const before = st.u; st.u += Math.sign(st.target - st.u) * dt / 1.1; if ((st.target - before) * (st.target - st.u) <= 0) st.u = st.target;
+        if (before < 0.12 && st.u >= 0.12 || before > 0.04 && st.u <= 0.04) click(before < st.u ? 1100 : 1500, 0.06);
+        pose();
+      }
+      st.power += ((st.u < 0.12 ? 1 : 0) - st.power) * Math.min(1, dt * 20);   // contact is made only while the prongs are in the slots
+    };
+    g.userData.persist = undefined;
     g.rotation.y = Math.PI; g.position.set(-0.72, 1.52, z1 - 0.002);
     return g;
   }

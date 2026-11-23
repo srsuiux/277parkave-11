@@ -79,7 +79,8 @@ export function buildWallSwitch() {
  * Screw-in bulb for the sink wall light. Origin = the socket mouth, bulb points up (local +y).
  * Returns a group; add it to the sconce group at the socket.
  */
-export function buildScrewBulb({ theta0 = 0 } = {}) {
+/** power: optional () => 0..1 - when given the bulb is screwed in for good and only the supply (e.g. a plug) controls it. */
+export function buildScrewBulb({ theta0 = 0, power = null } = {}) {
   const b = glassBulb(0.034);
   const g = new THREE.Group(); g.name = 'sconce-bulb-assembly'; g.userData.label = 'Screw-in bulb (rotate to switch on / dim)';
   const turning = new THREE.Group(); turning.name = 'bulb-turning'; turning.add(b.group); g.add(turning);
@@ -87,9 +88,9 @@ export function buildScrewBulb({ theta0 = 0 } = {}) {
   const hit = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.visible = false; hit.position.y = 0.045; hit.name = 'bulb-hit'; g.add(hit);
 
   const ON_AT = 150, FULL_AT = 330, MAX = 540;   // degrees: contact point, full brightness, end of thread
-  let theta = theta0, shown = theta0;
+  let theta = power ? FULL_AT + 40 : theta0, shown = theta;
   const brightness = () => Math.min(1, Math.max(0, (theta - ON_AT) / (FULL_AT - ON_AT)));
-  g.userData.interact = {
+  if (!power) g.userData.interact = {
     prompt: () => {
       const pct = Math.round(brightness() * 100);
       const state = pct === 0 ? (theta > 0 ? 'loose - turn further clockwise' : 'off') : `${pct}%`;
@@ -103,7 +104,7 @@ export function buildScrewBulb({ theta0 = 0 } = {}) {
     shown = ease(shown, theta, Math.min(1, dt * 14));
     turning.rotation.y = -THREE.MathUtils.degToRad(shown);            // clockwise seen from above
     turning.position.y = 0.012 * (1 - shown / MAX);                   // screws in as it turns
-    let k = Math.min(1, Math.max(0, (shown - ON_AT) / (FULL_AT - ON_AT)));
+    let k = Math.min(1, Math.max(0, (shown - ON_AT) / (FULL_AT - ON_AT))); if (power) k *= power();
     const flick = k > 0 && k < 0.4 ? 0.7 + 0.3 * Math.random() : 1;  // flickers near the contact point
     k *= flick;
     light.intensity = 4.2 * k * k; light.visible = k > 0.01;
