@@ -131,3 +131,13 @@ All UI is built from `src/ui/glass.css` (tokens: fill, blur, borders, radii, typ
 (`glassShow` / `glassHide` for entrance and exit animations). New panels should use `g-glass` (+ `g-strong`, `g-pill`, `g-pad`),
 `g-scrim` for modals, `g-tip` for tooltips; buttons, inputs, kbd and selects inside them are styled automatically.
 Don't hard-code colours, blur or radii in individual components.
+
+## Lighting model
+
+One connected environment, independent of where the player stands (`src/lighting.js`, wiring in `updateLighting()` in `main.js`):
+- **Direct light** - sun/moon and every room lamp cast real shadow maps (walls, closed doors and curtains block them; open doorways and
+  windows let them through). Point-light shadow maps are re-rendered only when a door/curtain/lamp changes.
+- **Indirect light** - a shader patch makes the ambient (hemisphere + environment) term depend on the fragment's world position: each room
+  gets a colour solved every frame from daylight x window openness (curtains), bounce from its own lamps, and light leaking through
+  open doors. A curtained, closed, unlit room at night is genuinely dark.
+- Limits: no true global illumination or per-window light gradients; ambient is uniform within a room.
