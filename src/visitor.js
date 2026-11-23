@@ -35,15 +35,15 @@ export function buildVisitor() {
   // upper body (hidden in first person): V-shaped torso, shoulders broader than the waist
   const upper = new THREE.Group(); upper.name = 'visitor-upper'; upper.visible = false; group.add(upper);
   const torso = new THREE.Group(); upper.add(torso);
-  part(torso, rBox(0.32, 0.27, 0.18, 0.07), hoodie, 0, 1.33, 0.03);       // chest + shoulders
-  part(torso, rBox(0.26, 0.26, 0.16, 0.06), hoodie, 0, 1.1, 0.03);       // waist
-  part(torso, rBox(0.27, 0.12, 0.17, 0.05), jeans, 0, 0.97, 0.03);       // hips
+  part(torso, rBox(0.28, 0.27, 0.17, 0.07), hoodie, 0, 1.33, 0.03);       // chest + shoulders
+  part(torso, rBox(0.23, 0.26, 0.15, 0.06), hoodie, 0, 1.1, 0.03);       // waist
+  part(torso, rBox(0.24, 0.12, 0.16, 0.05), jeans, 0, 0.97, 0.03);       // hips
   part(torso, new THREE.CylinderGeometry(0.045, 0.05, 0.09, 12), skin, 0, 1.5, 0.03);
   const head = part(torso, new THREE.SphereGeometry(0.1, 20, 16), skin, 0, eye, 0.03); head.scale.set(0.93, 1.12, 1.0);
   part(torso, new THREE.SphereGeometry(0.103, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, eye + 0.015, 0.025).scale.set(0.97, 1.1, 1.02);
   const arms = [];
   for (const s of [-1, 1]) {
-    const arm = new THREE.Group(); arm.position.set(s * 0.2, 1.42, 0.03); torso.add(arm);
+    const arm = new THREE.Group(); arm.position.set(s * 0.18, 1.42, 0.03); torso.add(arm);
     part(arm, new THREE.CylinderGeometry(0.043, 0.036, 0.27, 12), hoodie, 0, -0.135, 0);
     const elbow = new THREE.Group(); elbow.position.y = -0.27; arm.add(elbow);
     part(elbow, new THREE.CylinderGeometry(0.036, 0.03, 0.24, 12), hoodie, 0, -0.12, 0);

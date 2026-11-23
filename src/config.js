@@ -70,7 +70,7 @@ export const HALLWAY = {
 export const ROOMS = [];   // (the old living-room placeholder is now the real bedroom, see BEDROOM)
 
 // First-person
-export const PLAYER = { height: 1.78, eye: 1.67, radius: 0.13, walk: 1.5, run: 3.0 };
+export const PLAYER = { height: 1.78, eye: 1.67, radius: 0.085, walk: 1.5, run: 3.0 };
 
 // Loose furniture (IMG_1288-1292). x/z = footprint centre (m), rot = degrees about the vertical axis
 // (0 faces south/+z, -90 faces west, 90 faces east, 180 faces north), y = height off the floor.

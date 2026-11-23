@@ -14,7 +14,7 @@ import { AVATAR } from './avatar.js';
  * The rig never touches world objects; main.js only tells it the state and, on interaction, where to reach.
  */
 const L1 = 0.30, L2 = 0.265;                           // upper arm, forearm (shoulder -> elbow -> wrist)
-const SHOULDER = new THREE.Vector3(0.18, -0.235, 0.075);   // relative to the eye, x mirrored for the left arm
+const SHOULDER = new THREE.Vector3(0.155, -0.235, 0.07);   // relative to the eye, x mirrored for the left arm
 const HAND_LEN = 0.175;
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const sstep = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
@@ -79,8 +79,8 @@ export function buildFirstPersonBody(scene, camera) {
   const place = (m) => { m.castShadow = true; m.receiveShadow = true; m.layers.set(1); return m; };
 
   // torso (visible when looking down) + shoulder caps
-  const torso = place(new THREE.Mesh(rBox(0.335, 0.58, 0.2, 0.09), cloth)); torso.position.set(0, -0.53, 0.115); rig.add(torso);
-  const chest = place(new THREE.Mesh(rBox(0.31, 0.2, 0.18, 0.08), cloth)); chest.position.set(0, -0.3, 0.1); rig.add(chest);
+  const torso = place(new THREE.Mesh(rBox(0.29, 0.58, 0.18, 0.09), cloth)); torso.position.set(0, -0.53, 0.115); rig.add(torso);
+  const chest = place(new THREE.Mesh(rBox(0.27, 0.2, 0.17, 0.08), cloth)); chest.position.set(0, -0.3, 0.1); rig.add(chest);
   const arms = [-1, 1].map((side) => {
     const shoulder = SHOULDER.clone(); shoulder.x *= side;
     const cap = place(new THREE.Mesh(new THREE.SphereGeometry(0.052, 16, 12), cloth)); cap.position.copy(shoulder); rig.add(cap);

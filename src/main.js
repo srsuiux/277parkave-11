@@ -176,7 +176,7 @@ function blocked(x, z) {
   for (const s of doorSegs) {
     if (ignoreOpenDoors && !s.door.userData.locked) continue;
     const abx = s.bx - s.ax, abz = s.bz - s.az, t = Math.max(0, Math.min(1, ((x - s.ax) * abx + (z - s.az) * abz) / (abx * abx + abz * abz)));
-    const dx = x - (s.ax + abx * t), dz = z - (s.az + abz * t), rr = r + 0.035;
+    const dx = x - (s.ax + abx * t), dz = z - (s.az + abz * t), rr = r + 0.02;
     if (dx * dx + dz * dz < rr * rr) return true;
   }
   return false;
