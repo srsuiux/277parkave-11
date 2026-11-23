@@ -25,6 +25,9 @@ import { buildVisitor } from './visitor.js';
 import { buildFirstPersonBody } from './fpbody.js';
 import { initActivities } from './activity.js';
 import { monitor, initMonitorUI } from './monitor.js';
+import { initDevices } from './devices.js';
+import { initCameras } from './cameras.js';
+import { initDashboard } from './dashboard.js';
 import { setFixtureEnv } from './fixtures/mats.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -295,13 +298,22 @@ paintUI.save = () => layout.save();
 monitor.hooks.onOpen = () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; };
 monitor.hooks.onClose = (relock) => { if (relock) controls.lock(); else startEl.style.display = 'grid'; };
 layout.ready.then(() => { autoPlacePower(kitchen, layout.state.saved); rebuildColliders(); });
+// ---------- Smart Home Command Center (Tab): dashboard over the same device state as the 3D objects ----------
+const devices = initDevices({ scene, doors, operateDoor });
+const cameras = initCameras({ scene, renderer, mainCamera: camera });
+let fpsV = 0, fpsN = 0, fpsT = performance.now();
+const dash = initDashboard({
+  devices, cameras, layout, renderer, scene, clock: { fps: () => fpsV },
+  weatherInfo: () => ({ live: weather.loaded && weather.source !== 'default', tempF: weather.tempF, label: weather.label, clock: clockText(), zone: LOCATION.tz, simulated: dayEnv.override != null, day: dayEnv.sunElev > -4, phase: phaseName() }),
+  hooks: { onOpen: () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; }, onClose: (relock) => { if (relock) controls.lock(); else startEl.style.display = 'grid'; } },
+});
 startEl.addEventListener('click', () => controls.lock());
-controls.addEventListener('lock', () => { startEl.style.display = 'none'; });
-controls.addEventListener('unlock', () => { startEl.style.display = fb.state.edit || layout.state.on || monitor.open || paintUI.open ? 'none' : 'grid'; });
+controls.addEventListener('lock', () => { startEl.style.display = 'none'; dash.openBtn.style.display = 'none'; });
+controls.addEventListener('unlock', () => { startEl.style.display = fb.state.edit || layout.state.on || monitor.open || paintUI.open || dash.open ? 'none' : 'grid'; dash.openBtn.style.display = ''; });
 
 const keys = new Set();
 addEventListener('keydown', (e) => {
-  if (fb.isTyping(e) || monitor.open || paintUI.open) return;
+  if (fb.isTyping(e) || monitor.open || paintUI.open || dash.open) return;
   keys.add(e.code);
   if (!layout.state.on && !fb.state.edit) {
     if (e.code === 'KeyY') { if (activities.active) activities.stop(); else { const it = lookedAt()?.item; if (it?.userData.seat) activities.sit(it); else activities.useNearby(); } }
@@ -317,7 +329,7 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => keys.delete(e.code));
 // scroll wheel while looking at something turnable (the sink-light bulb)
 addEventListener('wheel', (e) => {
-  if (layout.state.on || fb.state.edit || monitor.open || paintUI.open) return;
+  if (layout.state.on || fb.state.edit || monitor.open || paintUI.open || dash.open) return;
   if (activities.active?.kind === 'toilet') { activities.scroll(e.deltaY); e.preventDefault(); return; }
   const w = lookedAt()?.item?.userData.interact.wheel;
   if (w) { w(e.deltaY); e.preventDefault(); }
@@ -468,10 +480,14 @@ function toggleDoor() {
   const d = hit?.door;
   if (!d) return;
   if (hit.point) fpBody.reach(hit.point, 'grab');
-  if (d.userData.locked) return;
-  if (d.userData.bolt && d === entry) { activities.toast(player.z < -0.07 ? 'Locked. Press G to unlock it with your key' : 'Locked. Press G to turn the deadbolt'); return; }
-  if (d.userData.bolt) { activities.toast(inBath() ? 'The door is locked - press Q to unlock it' : 'Locked from the inside - someone is in there'); return; }
-  if (d === bathDoor && inBath() && activities.needsFlush && d.userData.target < 5) { activities.toast('Flush the toilet before you leave!'); return; }
+  operateDoor(d);
+}
+/** Open/close a door the way a person would (used by the E key and by the dashboard). Returns a reason string if it refused. */
+function operateDoor(d) {
+  if (d.userData.locked) return 'sealed';
+  if (d.userData.bolt && d === entry) { activities.toast(player.z < -0.07 ? 'Locked. Press G to unlock it with your key' : 'Locked. Press G to turn the deadbolt'); return 'locked'; }
+  if (d.userData.bolt) { activities.toast(inBath() ? 'The door is locked - press Q to unlock it' : 'Locked from the inside - someone is in there'); return 'locked'; }
+  if (d === bathDoor && inBath() && activities.needsFlush && d.userData.target < 5) { activities.toast('Flush the toilet before you leave!'); return 'locked'; }
   d.userData.target = d.userData.target > 5 ? 0 : clearAngle(d);
   // don't close a door on the player
   if (d.userData.target === 0) {
@@ -480,6 +496,7 @@ function toggleDoor() {
     const cz = Math.max(b.min.z, Math.min(player.z, b.max.z));
     if ((player.x - cx) ** 2 + (player.z - cz) ** 2 < (P.radius + 0.1) ** 2) d.userData.target = d.userData.maxOpen;
   }
+  return null;
 }
 
 // ---------- loop ----------
@@ -571,6 +588,7 @@ addEventListener('resize', () => {
 renderer.setAnimationLoop(() => {
   step(Math.min(clock.getDelta(), 0.05));
   if (window.__ao.enabled) composer.render(); else renderer.render(scene, camera);
+  dash.frame(); fpsN++; const tn = performance.now(); if (tn - fpsT > 1000) { fpsV = Math.round(fpsN * 1000 / (tn - fpsT)); fpsN = 0; fpsT = tn; }
 });
 
 // debug hook for testing
@@ -584,4 +602,4 @@ async function snapshot(name = 'snapshot-' + new Date().toISOString().replace(/[
 }
 addEventListener('keydown', (e) => { if (e.code === 'KeyP' && !e.repeat && !fb.isTyping(e) && !paintUI.open && !layout.state.on) snapshot(); });
 
-window.__fp = { inside: insideApartment, setTime(ms) { dayEnv.override = ms; }, setWeather: (o) => Object.assign(weather, o), snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };
+window.__fp = { dash, devices, cameras, inside: insideApartment, setTime(ms) { dayEnv.override = ms; }, setWeather: (o) => Object.assign(weather, o), snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };

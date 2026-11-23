@@ -390,6 +390,7 @@ export function buildBathroom(mats) {
       st.power += ((st.u < 0.12 ? 1 : 0) - st.power) * Math.min(1, dt * 20); bathState.level = st.power;   // contact is made only while the prongs are in the slots
     };
     g.userData.persist = undefined;
+    g.userData.device = { plugged: () => st.target === 0, setPlugged: (v) => { const want = v ? 0 : 1; if (st.target !== want) { st.target = want; st.delay = 0.1; } }, power: () => st.power };   // read/driven by the dashboard
     g.rotation.y = Math.PI; g.position.set(-0.72, 1.52, z1 - 0.002);
     return g;
   }

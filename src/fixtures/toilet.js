@@ -103,6 +103,7 @@ export function buildToilet() {
     prompt: () => flushT >= 0 ? 'flushing…' : '<kbd>E</kbd> flush',
     run: () => { if (flushT >= 0) return; flushT = 0; snd.flush(volAt()); },
   };
+  g.userData.flushing = () => flushT >= 0;   // read by the dashboard
   g.userData.persist = { get: () => [lidUp, seatUp], set: (v) => { lidUp = !!v[0]; seatUp = !!v[1]; lidA = lidUp ? LID_UP : 0; seatA = seatUp ? SEAT_UP : 0; lid.rotation.x = lidA; seat.rotation.x = seatA; } };
   g.userData.update = (dt, ctx) => {
     camPos.copy(ctx.camera.position); vol = volAt();

@@ -481,5 +481,5 @@ export function initLayout({ scene, camera, renderer, roots, fb, wallPaints = []
   }
 
   const ready = load();
-  return { ready, state, toggle, movables, audit, save, update() { if (state.on && fb.state.edit) toggle(false); helper?.update(); placeHandles(); placeBar(); } };
+  return { ready, state, toggle, movables, audit, save, setVisible, update() { if (state.on && fb.state.edit) toggle(false); helper?.update(); placeHandles(); placeBar(); } };
 }
