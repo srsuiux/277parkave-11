@@ -60,14 +60,14 @@
     "visible": true
   },
   "monitor": {
-    "x": 2.808,
-    "y": 0.9,
-    "z": 3.391,
-    "rot": -90,
+    "x": 2.363,
+    "y": 0.74,
+    "z": 4.333,
+    "rot": -360,
     "sx": 1,
     "sy": 1,
     "sz": 1,
-    "visible": false
+    "visible": true
   },
   "laptop": {
     "x": 2.619,
@@ -260,13 +260,13 @@
     "visible": true
   },
   "bed-1": {
-    "x": -0.316,
+    "x": -0.379,
     "y": 0,
     "z": 4.612,
     "rot": 450,
     "sx": 1.094,
     "sy": 1,
-    "sz": 0.872,
+    "sz": 0.807,
     "visible": true,
     "paint": {
       "Blanket": "#9c6b43",
@@ -275,18 +275,33 @@
     }
   },
   "bed-2": {
-    "x": 2.069,
+    "x": 2.159,
     "y": 0,
     "z": 7.059,
     "rot": -90,
     "sx": 1.308,
     "sy": 1,
-    "sz": 1.14,
+    "sz": 1.047,
     "visible": true,
     "paint": {
       "Blanket": "#8a8d92",
       "Mattress": "#4b8fc7",
+      "Lower mattress": "#bdb8aa",
       "Pillow": "#3f4f8a"
+    }
+  },
+  "bedside-storage-table": {
+    "x": 2.97,
+    "y": 0,
+    "z": 6.12,
+    "rot": -90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Table body": "#6b3f26",
+      "Lid": "#6b3f26"
     }
   },
   "bedroom-sofa": {
@@ -299,8 +314,8 @@
     "sz": 1.616,
     "visible": true,
     "paint": {
-      "Sofa body": "#3d2a1e",
-      "Cushions": "#3d2a1e"
+      "Sofa body": "#6b3f26",
+      "Cushions": "#6b3f26"
     }
   },
   "study-table": {
@@ -313,9 +328,8 @@
     "sz": 1,
     "visible": true,
     "paint": {
-      "Table top": "#ffffff",
-      "Frame": "#ffffff",
-      "Lamp shade": "#e0a0b0"
+      "Table top": "#6b3f26",
+      "Frame": "#4b8fc7"
     }
   },
   "study-chair": {
