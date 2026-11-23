@@ -1,0 +1,271 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T18:19:54.633Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "thzifuah",
+      "n": 1,
+      "type": "fix",
+      "comment": "this part is flickering when i am walking",
+      "createdAt": "2026-11-23T18:12:17.997Z",
+      "target": {
+        "label": "Bedroom closet wall S wall",
+        "name": "wall-section",
+        "path": "bedroom / closet / closet-wall-S / wall-section",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          1.98,
+          2.45,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        3.1999999904632572,
+        1.0863438055860555,
+        7.648101960975092
+      ],
+      "normal": [
+        -1,
+        0,
+        -1.2246467991473532e-16
+      ],
+      "camera": {
+        "position": [
+          1.289,
+          1.67,
+          5.765
+        ],
+        "yaw": -2.355,
+        "pitch": -0.136,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-01.jpg"
+    },
+    {
+      "id": "qmth8xut",
+      "n": 2,
+      "type": "fix",
+      "comment": "this white part is flickering when i am walking",
+      "createdAt": "2026-11-23T18:12:34.978Z",
+      "target": {
+        "label": "Bedroom closet wall N wall",
+        "name": "wall-section",
+        "path": "bedroom / closet / closet-wall-N / wall-section",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          1.98,
+          2.45,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        3.1999999904632572,
+        1.4671255343256506,
+        4.3488923218127225
+      ],
+      "normal": [
+        -1,
+        0,
+        0
+      ],
+      "camera": {
+        "position": [
+          1.289,
+          1.67,
+          5.765
+        ],
+        "yaw": -0.921,
+        "pitch": -0.104,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-02.jpg"
+    },
+    {
+      "id": "gzkbnzja",
+      "n": 3,
+      "type": "fix",
+      "comment": "here the whtie part is flickering when there is a person walking",
+      "createdAt": "2026-11-23T18:13:00.210Z",
+      "target": {
+        "label": "Bathroom south wall",
+        "name": "wall-section",
+        "path": "bathroom / walls / wall-S / wall-section",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          2.13,
+          2.45,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#cdd3d6"
+        }
+      },
+      "point": [
+        -0.11703891142023148,
+        1.1953479006167227,
+        4.040000000298023
+      ],
+      "normal": [
+        -1.2246467991473532e-16,
+        0,
+        1
+      ],
+      "camera": {
+        "position": [
+          1.289,
+          1.67,
+          5.765
+        ],
+        "yaw": 0.631,
+        "pitch": -0.136,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-03.jpg"
+    },
+    {
+      "id": "3wdyhuuj",
+      "n": 4,
+      "type": "fix",
+      "comment": "this pipes has to be little to the riht side near the sofa. by default.  all the pipls, and the gas pipes are connected to the heater let;s have that",
+      "createdAt": "2026-11-23T18:13:53.008Z",
+      "target": {
+        "label": "Heater pipework (round water pipes + small gas pipe with valve)",
+        "name": "water-riser-supply",
+        "path": "bedroom / heater-pipes / water-riser-supply",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.042,
+          2.43,
+          0.042
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        1.9499734140076448,
+        1.3433931035158677,
+        7.679592709789066
+      ],
+      "normal": [
+        -0.422618066899445,
+        0,
+        -0.9063078778925935
+      ],
+      "camera": {
+        "position": [
+          1.289,
+          1.67,
+          5.765
+        ],
+        "yaw": -2.85,
+        "pitch": -0.16,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-04.jpg"
+    },
+    {
+      "id": "tov1qav7",
+      "n": 5,
+      "type": "fix",
+      "comment": "# Update Bedroom Furniture Based on Actual Physical Layout\n\nI want you to accurately represent my current bedroom setup in the existing Three.js environment.\n\n## 1. Bed Configuration\n\nMy bed consists of two mattresses stacked directly on top of each other.\n\nRequirements:\n- Represent two separate mattresses, one placed directly on top of the other.\n- Both mattresses should be clearly distinguishable through their visible layers and edges.\n- Maintain realistic mattress thickness, proportions, and positioning.\n- The upper mattress is the actual sleeping surface.\n- Do not represent this as one unusually thick mattress.\n- Preserve the existing bed placement and orientation unless adjustments are necessary to match the actual arrangement.\n\n## 2. Small Storage Table Beside the Bed\n\nThere is a small table positioned near my bed, next to a power outlet.\n\nThis is not a regular bedside table. It has a special opening mechanism.\n\nRequirements:\n- Create a compact bedside storage table.\n- Position it near the bed, close to the existing wall power outlet.\n- Its upper surface functions as an opening lid.\n- The tabletop should be hinged and capable of opening upward.\n- When opened, it reveals a small hollow storage compartment inside.\n- The compartment should have realistic interior depth and enough space to hold small personal belongings.\n- When closed, it should look like a normal compact table.\n- When opened, the lid should rotate naturally around its hinge rather than disappearing or moving independently.\n\n## 3. Interactive Behavior\n\nImplement realistic first-person interactions:\n\n**Table interaction:**\n- Approach the table and interact with it.\n- The lid opens upward smoothly.\n- The interior storage compartment becomes visible.\n- Interact again to close the lid.\n- Prevent the lid from clipping through the table or surrounding objects.\n\n**Storage compartment:**\n- Allow small objects to be placed inside.\n- Keep stored objects contained within the compartment.\n- Make the objects visible when the lid is open.\n\n## 4. Accuracy and Implementation\n\nUse the existing bedroom scene as the foundation.\n\nDo not invent unnecessary furniture or change the room layout.\n\nPay attention to the physical relationship between:\n- The two stacked mattresses.\n- The small storage table.\n- The wall power outlet.\n- The available walking space around the bed.\n\nMake the arrangement look like an actual lived-in bedroom rather than a staged furniture showroom.\n\nBefore modifying anything, inspect the existing scene and identify which objects need repositioning, modification, or creation.",
+      "createdAt": "2026-11-23T18:17:38.688Z",
+      "target": {
+        "label": "My mattress (single, with blanket)",
+        "name": "mattress",
+        "path": "bedroom / bed-2 / mattress",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          2.223,
+          0.2,
+          1.243
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#4b8fc7"
+        }
+      },
+      "point": [
+        2.6623405893167846,
+        0.23000000149011635,
+        6.507331148093286
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "camera": {
+        "position": [
+          2.115,
+          1.67,
+          5.375
+        ],
+        "yaw": -3.014,
+        "pitch": -0.846,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-05.jpg"
+    },
+    {
+      "id": "cgghul3m",
+      "n": 6,
+      "type": "fix",
+      "comment": "there is no lmp in the room, let's remove that. no need of that.",
+      "createdAt": "2026-11-23T18:18:16.626Z",
+      "target": {
+        "label": "Study table (small)",
+        "name": "lamp-base",
+        "path": "bedroom / study-table / lamp-base",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.19,
+          0.015,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#222222"
+        }
+      },
+      "point": [
+        2.788728470947231,
+        0.7480078249278937,
+        4.234451564513493
+      ],
+      "normal": [
+        -0.5806859171705184,
+        0.5032516705256502,
+        0.6399543903380741
+      ],
+      "camera": {
+        "position": [
+          2.115,
+          1.67,
+          5.375
+        ],
+        "yaw": -0.56,
+        "pitch": -0.414,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-19-54-06.jpg"
+    }
+  ]
+}

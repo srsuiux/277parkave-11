@@ -47,13 +47,13 @@ Units are metres: `x` = east, `y` = up, `z` = south. Dimensions are estimates fr
 | `W A S D` / `Shift` | walk / run (mouse to look) |
 | `E` | use what you're looking at (doors, switches, taps, curtains, valves…) |
 | `Y` | sit on a chair / use the toilet / take a shower |
-| `V` | toggle third-person camera |
 | `X` | change colours of the object or wall you're looking at |
 | `Q` | lock / unlock the bathroom door (from inside) |
 | `R` | bathroom rug on / off |
 | `L` | **Layout mode** — drag, rotate and resize objects |
 | `F` | **Feedback mode** — leave notes pinned to what you see |
-| `T` | jump to the next time of day (morning → afternoon → sunset → night); `[` / `]` = −/+ 1 hour |
+| `H` | cycle hand position: Auto (hands rise when you look at something to use) / Up / Natural / Down |
+| `G` | lock / unlock the front door: key from the hallway side, deadbolt thumb-turn from inside |
 | `P` | save a screenshot of the current view to `docs/screenshots/` (dev server only) |
 | `Esc` | release the mouse |
 
@@ -63,25 +63,28 @@ Units are metres: `x` = east, `y` = up, `z` = south. Dimensions are estimates fr
 src/config.js          room sizes, doors, furniture defaults
 src/main.js            scene, loop, interaction, per-room lighting
 src/shell/             rooms: kitchen, bathroom, bedroom, hallway, walls, winter street view
-src/daycycle.js        day / night cycle: sun + moon arcs, sky colours, shadow-casting light
-src/clockui.js         the clock bar (time, slider, presets, play / pause, speed)
+src/fpbody.js          first-person body: torso, sleeves, IK arms, hands (layer 1, sees only through your eyes)
+src/avatar.js          shared avatar identity (shirt + skin colours)
+src/daycycle.js        real-time sun + moon position, sky colours, shadow-casting light
+src/weather.js         live Youngstown weather (Open-Meteo)
 src/fixtures/          sink, toilet, stove, fridge, lights, rugs, power outlets…
 src/layout.js          Layout mode (drag / resize / save positions)
 src/paint.js           colour modal;  src/wallpaint.js  paintable walls
 src/feedback.js        Feedback mode
 docs/screenshots/      preview images used by this README
-src/activity.js        sit / toilet / shower + third-person camera
+src/activity.js        sit / toilet / shower (first person)
 layout.json            saved positions, sizes and colours (written by Layout mode)
 layout-backups/        automatic copy of the previous layout on every save
 feedback/              notes made in Feedback mode (see below)
 ```
 
-## Time of day
+## Real time + live weather
 
-The clock bar at the bottom of the screen shows the time and phase. Drag the slider or press **Morning / Afternoon / Sunset / Night**
-to jump, **Pause / Play** to freeze the sun, and pick a speed (Slow = 20 s per in-game hour … Very fast = 1.5 s). While the mouse is
-captured use **`T`** and **`[` `]`**. The time and speed are remembered in your browser. The sun rises at 6:30, peaks at 34° and
-sets at 17:30 (a winter day); both bedroom and bathroom windows face west, so afternoon and sunset are when the sun reaches inside.
+The apartment is labelled **277 Park Ave #11, Youngstown, OH**. On load it takes the real time (US Eastern) and computes where the
+sun and moon actually are over Youngstown (astronomical formulas, no API), so the sunlight through the windows matches the real sky
+right now, and the moon follows its real phase. The weather comes live from [Open-Meteo](https://open-meteo.com) (no key; only
+Youngstown's public coordinates are sent, refreshed every 10 minutes): snow, rain, fog, cloud cover, wind and temperature drive the
+view outside. If the request fails it falls back to a snowy default. A small label at the bottom shows place, time, phase and weather.
 
 ## Layout mode (`L`) and `layout.json`
 
@@ -121,3 +124,10 @@ The images above are real captures of the running preview, saved by the dev serv
 
 [three.js](https://threejs.org) `^0.170` + [Vite](https://vite.dev) 6. All geometry, textures (canvas), and the winter scene are
 generated in code.
+
+## UI design system (glass)
+
+All UI is built from `src/ui/glass.css` (tokens: fill, blur, borders, radii, type, shadows, motion) and `src/ui/glass.js`
+(`glassShow` / `glassHide` for entrance and exit animations). New panels should use `g-glass` (+ `g-strong`, `g-pill`, `g-pad`),
+`g-scrim` for modals, `g-tip` for tooltips; buttons, inputs, kbd and selects inside them are styled automatically.
+Don't hard-code colours, blur or radii in individual components.

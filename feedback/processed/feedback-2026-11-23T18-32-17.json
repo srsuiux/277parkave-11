@@ -1,0 +1,95 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T18:32:17.518Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "kc4zx9wn",
+      "n": 1,
+      "type": "fix",
+      "comment": "this wall is flicering when i am walking. the white part to the kitchen is doing tis",
+      "createdAt": "2026-11-23T18:29:29.665Z",
+      "target": {
+        "label": "Bathroom north wall",
+        "name": "wall-section",
+        "path": "bathroom / walls / wall-N / wall-section",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          2.13,
+          2.45,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#cdd3d6"
+        }
+      },
+      "point": [
+        5.72204588156211e-8,
+        1.3727192857926964,
+        -0.03378765186126141
+      ],
+      "normal": [
+        1,
+        0,
+        0
+      ],
+      "camera": {
+        "position": [
+          1.5,
+          1.67,
+          1.7
+        ],
+        "yaw": 0.717,
+        "pitch": -0.158,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-32-17-01.jpg"
+    },
+    {
+      "id": "kjfvfqu9",
+      "n": 2,
+      "type": "fix",
+      "comment": "# Implement Realistic Bathroom Light Power Connection\n\nUpdate the existing bathroom scene to accurately represent how the bathroom light works in my actual apartment.\n\n## 1. Physical Setup\n\nThe bathroom light does not use a conventional wall switch.\n\nInstead:\n- There is a power outlet/connection port near the bathroom mirror.\n- The bathroom light is powered through a physical wired connection to this port.\n- The light operates when its power cable is plugged into the connection.\n- There is no separate light switch.\n\nRepresent the actual arrangement accurately.\n\n## 2. Cable and Connection\n\nImplement a visible electrical cable connecting the bathroom light to the nearby power port.\n\nRequirements:\n- Position the power port near the mirror.\n- Route the cable naturally between the port and the light.\n- Make the cable visually realistic, with natural bends and appropriate length.\n- Ensure the cable connects to both the light and the power port.\n- Avoid cables floating, clipping through objects, or passing through walls.\n\n## 3. Interactive Plugging and Unplugging\n\nThe power connection must be interactive from the existing first-person perspective.\n\n**When plugged in:**\n- The cable connector is visibly inserted into the port.\n- The bathroom light is powered on.\n- The light illuminates the bathroom naturally.\n\n**When unplugged:**\n- The avatar can approach and interact with the connection.\n- The hand reaches toward the plug.\n- The connector is pulled out naturally.\n- The cable disconnects visibly.\n- The bathroom light turns off immediately.\n- The light no longer illuminates the room.\n\n**When plugged in again:**\n- The avatar can reconnect the cable.\n- The light powers on again.\n\n## 4. Physical Interaction and Animation\n\n- Use realistic first-person hand interactions.\n- Animate the hand reaching for the connector.\n- Show the plug being grasped and removed.\n- Animate the connector moving back into the power port when reconnecting.\n- Prevent the hand, cable, and connector from clipping into the wall or surrounding objects.\n- Keep the cable attached to the light throughout the interaction.\n\n## 5. Electrical State Management\n\nMaintain a consistent connection state.\n\nThe light's power state must depend on whether the cable is connected to the power port.\n\nDo not implement an independent toggle switch for this light.\n\nThe connection itself controls the light.\n\n## 6. Implementation Instructions\n\nFirst inspect the existing bathroom light, mirror, nearby outlet, and interaction systems.\n\nPreserve the existing scene and modify only what is necessary.\n\nTest both plugging and unplugging to ensure the visual connection, electrical state, lighting, and first-person interaction remain synchronized.\n\n**Expected result:** A realistic bathroom light that operates exclusively through its physical wired connection, just like the actual setup in my apartment.",
+      "createdAt": "2026-11-23T18:32:11.805Z",
+      "target": {
+        "label": "Screw-in bulb (rotate to switch on / dim)",
+        "name": "bulb-glass",
+        "path": "bathroom / bath-sconce / sconce-bulb-assembly / bulb-turning / bulb-glass",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.092,
+          0.082,
+          0.093
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#fff6e0"
+        }
+      },
+      "point": [
+        -0.7290056070076076,
+        1.6523385706527733,
+        3.770553839099215
+      ],
+      "normal": [
+        -0.18796934888027417,
+        0.11619431646951298,
+        -0.9752776039168071
+      ],
+      "camera": {
+        "position": [
+          -0.879,
+          1.67,
+          2.818
+        ],
+        "yaw": -2.924,
+        "pitch": -0.178,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T18-32-17-02.jpg"
+    }
+  ]
+}
