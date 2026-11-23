@@ -1,0 +1,139 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T04:35:22.461Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "5xxmjmzo",
+      "n": 1,
+      "type": "fix",
+      "comment": "here is the shower room small one.  and the mirror is supposed to be on the right side wall, and the hanger too, but the current place where the hanger and teh mirror is there there has to be the shower place.",
+      "createdAt": "2026-11-23T04:34:12.136Z",
+      "target": {
+        "label": "Shower stall (white fibreglass, rod + curtain)",
+        "name": "partition-tile",
+        "path": "bathroom / shower-stall / partition-tile",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.93,
+          1.12,
+          0.012
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        -0.5115776034240249,
+        0.9361362681279101,
+        1.1720000000521542
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "camera": {
+        "position": [
+          -0.949,
+          1.62,
+          2.434
+        ],
+        "yaw": -0.284,
+        "pitch": -0.485,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T04-35-22-01.jpg"
+    },
+    {
+      "id": "t6mo728b",
+      "n": 2,
+      "type": "fix",
+      "comment": "make bathroom comod the more clean. and detailed. we can open the lid, close the lod, and flush and alike also add some sounds too.",
+      "createdAt": "2026-11-23T04:34:55.646Z",
+      "target": {
+        "label": "Toilet (white, lid up)",
+        "name": "toilet-rim",
+        "path": "bathroom / toilet / toilet-rim",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.374,
+          0.02,
+          0.572
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#f4f3ee"
+        }
+      },
+      "point": [
+        -1.6258440251276063,
+        0.4059035817325118,
+        0.6297870444160202
+      ],
+      "normal": [
+        0.7204353830462021,
+        0.4658160780289162,
+        -0.5137978593813238
+      ],
+      "camera": {
+        "position": [
+          -0.949,
+          1.62,
+          2.434
+        ],
+        "yaw": -0.284,
+        "pitch": -0.485,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T04-35-22-02.jpg"
+    },
+    {
+      "id": "iel7uopy",
+      "n": 3,
+      "type": "fix",
+      "comment": "the floor of the bathroom is little dirty, and sliver like floor.",
+      "createdAt": "2026-11-23T04:35:21.507Z",
+      "target": {
+        "label": "Bathroom floor (speckled vinyl)",
+        "name": "floor",
+        "path": "bathroom / floor",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          2.13,
+          0.06,
+          3.99
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        -1.4199844614260366,
+        -6.705522526129215e-10,
+        1.0638548455473014
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "camera": {
+        "position": [
+          -0.949,
+          1.62,
+          2.434
+        ],
+        "yaw": -0.284,
+        "pitch": -0.485,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T04-35-22-03.jpg"
+    }
+  ]
+}

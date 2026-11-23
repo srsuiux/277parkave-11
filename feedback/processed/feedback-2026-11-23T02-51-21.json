@@ -1,0 +1,183 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T02:51:21.526Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "t0cda1h3",
+      "n": 1,
+      "type": "fix",
+      "comment": "here in this kitchen, and the wall of the wardrobe or cupboard ther eis a gap, of the size of the sink there. let's fix this asap",
+      "createdAt": "2026-11-23T02:47:45.675Z",
+      "target": {
+        "label": "Entrance door #11 (main door)",
+        "name": "door-casing",
+        "path": "kitchen-shell / walls / wall-N / north-door / door-casing",
+        "room": "kitchen-shell",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.085,
+          2.135,
+          0.025
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#eeece4"
+        }
+      },
+      "point": [
+        0.5504132067113858,
+        0.48227588755996975,
+        0.025000000186264516
+      ],
+      "normal": [
+        0,
+        0,
+        1
+      ],
+      "camera": {
+        "position": [
+          0.851,
+          1.62,
+          0.202
+        ],
+        "yaw": 0.84,
+        "pitch": -1.174,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T02-51-21-01.jpg"
+    },
+    {
+      "id": "n9oyoc6b",
+      "n": 2,
+      "type": "fix",
+      "comment": "the sink does not look clean. it shows the gray tiles, but not actually the depth and the water outlet from the bottom of the sink. right. let's do this.",
+      "createdAt": "2026-11-23T02:48:31.358Z",
+      "target": {
+        "label": "Sink cabinet - two doors",
+        "name": "cabinet-carcass",
+        "path": "kitchen-shell / counter-run / sink-cabinet / cabinet-carcass",
+        "room": "kitchen-shell",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.58,
+          0.77,
+          1.23
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#777f87"
+        }
+      },
+      "point": [
+        0.303189854839536,
+        0.8699999904632568,
+        0.9023104774828428
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "camera": {
+        "position": [
+          0.851,
+          1.62,
+          0.202
+        ],
+        "yaw": 2.212,
+        "pitch": -0.98,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T02-51-21-02.jpg"
+    },
+    {
+      "id": "3s9oov8i",
+      "n": 3,
+      "type": "fix",
+      "comment": "rug has to be doublein height and width.",
+      "createdAt": "2026-11-23T02:48:54.352Z",
+      "target": {
+        "label": "Grey shag rug (kitchen)",
+        "name": "rug",
+        "path": "kitchen-shell / rug",
+        "room": "kitchen-shell",
+        "kind": "mesh",
+        "sizeMeters": [
+          1.117,
+          0.04,
+          1.741
+        ],
+        "material": {
+          "type": "MeshPhysicalMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        1.2347532610836651,
+        0.03999999955296517,
+        1.8504893779405929
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "camera": {
+        "position": [
+          0.851,
+          1.62,
+          0.202
+        ],
+        "yaw": 2.406,
+        "pitch": -1.01,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T02-51-21-03.jpg"
+    },
+    {
+      "id": "sunildt9",
+      "n": 4,
+      "type": "fix",
+      "comment": "here is thefgidge, facing to the kitchen,",
+      "createdAt": "2026-11-23T02:51:20.259Z",
+      "target": {
+        "label": "East wall - fridge side",
+        "name": "wall-section",
+        "path": "kitchen-shell / walls / wall-E / wall-section",
+        "room": "kitchen-shell",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.14,
+          2.45,
+          2.57
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        2.999999999701977,
+        1.0989914878632114,
+        1.9963822113714196
+      ],
+      "normal": [
+        -1,
+        0,
+        2.220446049250313e-16
+      ],
+      "camera": {
+        "position": [
+          0.841,
+          1.62,
+          2.678
+        ],
+        "yaw": -1.236,
+        "pitch": -0.332,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T02-51-21-04.jpg"
+    }
+  ]
+}

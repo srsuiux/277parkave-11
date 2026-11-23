@@ -1,0 +1,437 @@
+{
+  "counter-run": {
+    "x": 0.02,
+    "y": 0,
+    "z": 3.524,
+    "rot": 90,
+    "sx": 0.749,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "rug": {
+    "x": 1.104,
+    "y": 0.02,
+    "z": 1.724,
+    "rot": 0,
+    "sx": 0.492,
+    "sy": 1,
+    "sz": 0.524,
+    "visible": true
+  },
+  "fridge": {
+    "x": 2.98,
+    "y": 0,
+    "z": 1.846,
+    "rot": -90,
+    "sx": 0.8,
+    "sy": 1,
+    "sz": 0.7,
+    "visible": true
+  },
+  "bookshelf": {
+    "x": 2.815,
+    "y": 0,
+    "z": 0.847,
+    "rot": -90,
+    "sx": 1.4,
+    "sy": 1.35,
+    "sz": 1,
+    "visible": true
+  },
+  "metal-chair": {
+    "x": 2.77,
+    "y": 0,
+    "z": 2.415,
+    "rot": -90,
+    "sx": 0.84,
+    "sy": 0.88,
+    "sz": 1,
+    "visible": true
+  },
+  "dining-table": {
+    "x": 2.672,
+    "y": 0,
+    "z": 3.488,
+    "rot": 0,
+    "sx": 0.56,
+    "sy": 0.974,
+    "sz": 1.044,
+    "visible": true
+  },
+  "monitor": {
+    "x": 2.808,
+    "y": 0.9,
+    "z": 3.391,
+    "rot": -90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": false
+  },
+  "laptop": {
+    "x": 2.619,
+    "y": 0.9,
+    "z": 3.411,
+    "rot": -90,
+    "sx": 0.725,
+    "sy": 0.641,
+    "sz": 0.644,
+    "visible": true
+  },
+  "diary": {
+    "x": 2.66,
+    "y": 0.9,
+    "z": 3.3,
+    "rot": 90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": false
+  },
+  "chair-north": {
+    "x": 2.204,
+    "y": 0,
+    "z": 3.43,
+    "rot": 90,
+    "sx": 0.809,
+    "sy": 1,
+    "sz": 0.761,
+    "visible": true
+  },
+  "chair-west": {
+    "x": 1.6,
+    "y": 0,
+    "z": 3,
+    "rot": 90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": false
+  },
+  "dresser": {
+    "x": 1.728,
+    "y": -0.003,
+    "z": 3.67,
+    "rot": 180,
+    "sx": 0.737,
+    "sy": 0.781,
+    "sz": 1,
+    "visible": true
+  },
+  "radiator": {
+    "x": 2.1,
+    "y": 0,
+    "z": 0.095,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "orange-chair": {
+    "x": 1.533,
+    "y": 0,
+    "z": 0.599,
+    "rot": 0,
+    "sx": 0.784,
+    "sy": 0.812,
+    "sz": 0.794,
+    "visible": true
+  },
+  "wall-outlet": {
+    "x": 3,
+    "y": 0.3,
+    "z": 1.521,
+    "rot": -90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "power-strip": {
+    "x": 2.82,
+    "y": 0,
+    "z": 1.521,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "toilet": {
+    "x": -1.571,
+    "y": 0,
+    "z": 0.43,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "bath-radiator": {
+    "x": -1.815,
+    "y": 0,
+    "z": 1.519,
+    "rot": 90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "vanity": {
+    "x": -1.453,
+    "y": 0,
+    "z": 3.635,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "bath-cabinet": {
+    "x": -0.993,
+    "y": 0,
+    "z": 3.785,
+    "rot": 90,
+    "sx": 0.412,
+    "sy": 1.315,
+    "sz": 0.448,
+    "visible": false
+  },
+  "trash-bin": {
+    "x": -0.3,
+    "y": 0,
+    "z": 1.349,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "east-mirror-strip": {
+    "x": -0.158,
+    "y": 1.33,
+    "z": 1.98,
+    "rot": -90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "towel-bar": {
+    "x": -0.158,
+    "y": 0.85,
+    "z": 1.98,
+    "rot": -90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "vanity-mirror": {
+    "x": -1.4,
+    "y": 1.66,
+    "z": 3.898,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "bath-rug": {
+    "x": -1.065,
+    "y": 0,
+    "z": 1.975,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": false
+  },
+  "bed-1": {
+    "x": -0.316,
+    "y": 0,
+    "z": 4.612,
+    "rot": 450,
+    "sx": 1.094,
+    "sy": 1,
+    "sz": 0.872,
+    "visible": true,
+    "paint": {
+      "Blanket": "#9c6b43",
+      "Mattress": "#d9c7a3",
+      "Pillow": "#9c6b43"
+    }
+  },
+  "bed-2": {
+    "x": 2.069,
+    "y": 0,
+    "z": 7.059,
+    "rot": -90,
+    "sx": 1.308,
+    "sy": 1,
+    "sz": 1.14,
+    "visible": true,
+    "paint": {
+      "Blanket": "#8a8d92",
+      "Mattress": "#4b8fc7",
+      "Pillow": "#3f4f8a"
+    }
+  },
+  "bedroom-sofa": {
+    "x": -0.366,
+    "y": 0,
+    "z": 7.058,
+    "rot": -180,
+    "sx": 1.221,
+    "sy": 1,
+    "sz": 1.616,
+    "visible": true,
+    "paint": {
+      "Sofa body": "#3d2a1e",
+      "Cushions": "#3d2a1e"
+    }
+  },
+  "study-table": {
+    "x": 2.328,
+    "y": 0,
+    "z": 4.335,
+    "rot": 0,
+    "sx": 1.358,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Table top": "#ffffff",
+      "Frame": "#ffffff",
+      "Lamp shade": "#f2e6c8"
+    }
+  },
+  "study-chair": {
+    "x": -0.264,
+    "y": 0,
+    "z": 5.415,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": false,
+    "paint": {
+      "Wood": "#ffffff",
+      "Seat": "#8a6a4a"
+    }
+  },
+  "bedroom-radiator": {
+    "x": -1.191,
+    "y": 0,
+    "z": 5.821,
+    "rot": 90,
+    "sx": 1.208,
+    "sy": 1,
+    "sz": 1.487,
+    "visible": true,
+    "paint": {
+      "Paint": "#d9c7a3"
+    }
+  },
+  "wall-heater": {
+    "x": 0.75,
+    "y": 0,
+    "z": 7.738,
+    "rot": 180,
+    "sx": 0.344,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Casing": "#f1efe8"
+    }
+  },
+  "heater-pipes": {
+    "x": 1.96,
+    "y": 0,
+    "z": 7.738,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "bedroom-ac": {
+    "x": -1.295,
+    "y": 1.175,
+    "z": 4.773,
+    "rot": 90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Casing": "#f1f1ee"
+    }
+  },
+  "bedroom-curtains": {
+    "x": -1.04,
+    "y": 0,
+    "z": 5.89,
+    "rot": 90,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Fabric": "#2b2d31"
+    }
+  },
+  "ceiling-fan": {
+    "x": 0.95,
+    "y": 2.45,
+    "z": 5.79,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Blades": "#ffffff",
+      "Fan body": "#cfcac0"
+    }
+  },
+  "bedroom-rug": {
+    "x": 0.976,
+    "y": 0,
+    "z": 5.864,
+    "rot": 0,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true
+  },
+  "closet-suitcase": {
+    "x": 3.72,
+    "y": 0,
+    "z": 6.29,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Shell": "#2f4a66"
+    }
+  },
+  "closet-bins": {
+    "x": 4.29,
+    "y": 0,
+    "z": 6.31,
+    "rot": 180,
+    "sx": 1,
+    "sy": 1,
+    "sz": 1,
+    "visible": true,
+    "paint": {
+      "Bins": "#8fa4b8"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T06:00:40.793Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "j3b1ilph",
+      "n": 1,
+      "type": "fix",
+      "comment": "this sink has the entire color white. let's fix this. the sink top part i am teiing not he cubpoard at the bottom. and it has hot and cold water same a s the kitchen sink.",
+      "createdAt": "2026-11-23T05:05:59.051Z",
+      "target": {
+        "label": "Cultured-marble top",
+        "name": "vanity-top",
+        "path": "bathroom / vanity / vanity-top",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.648,
+          0.043,
+          0.498
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#f2f1ec"
+        }
+      },
+      "point": [
+        -1.531316549753107,
+        0.7640000008046627,
+        3.4951574953432334
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "camera": {
+        "position": [
+          -1.418,
+          1.67,
+          3.053
+        ],
+        "yaw": 3.108,
+        "pitch": -0.999,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T06-00-40-01.jpg"
+    }
+  ]
+}

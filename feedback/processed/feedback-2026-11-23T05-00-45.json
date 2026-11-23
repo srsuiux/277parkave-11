@@ -1,0 +1,95 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T05:00:45.136Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "ndepo1d6",
+      "n": 1,
+      "type": "fix",
+      "comment": "here the handle or the clothes hanger to be full width same a the mirror and can be taken as the object. width increase and decrease. and remove that whote object at the bottom like a rope or so",
+      "createdAt": "2026-11-23T04:58:58.856Z",
+      "target": {
+        "label": "Bathroom east (kitchen side) wall",
+        "name": "tile-wainscot",
+        "path": "bathroom / walls / wall-E / tile-wainscot",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.012,
+          1.122,
+          2.77
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        -0.1560000000521538,
+        1.007782086880268,
+        2.3460015095084668
+      ],
+      "normal": [
+        -1,
+        0,
+        2.220446049250313e-16
+      ],
+      "camera": {
+        "position": [
+          -0.926,
+          1.67,
+          2.343
+        ],
+        "yaw": -1.067,
+        "pitch": -0.909,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T05-00-45-01.jpg"
+    },
+    {
+      "id": "jx7dr14q",
+      "n": 2,
+      "type": "fix",
+      "comment": "here the curtain is not transparent from the inside, and it is little white and little golden in color. also make this curtain can be color changed.  diff texgure for the clothes and more.",
+      "createdAt": "2026-11-23T05:00:43.432Z",
+      "target": {
+        "label": "Shower curtain (yellow, floral) - drag / scroll to slide",
+        "name": "shower-curtain",
+        "path": "bathroom / shower-stall / shower-curtain",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0.89,
+          1.78,
+          0.039
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        -1.0371011776572843,
+        1.2251886699195005,
+        1.0756474929999773
+      ],
+      "normal": [
+        -0.32766009215629266,
+        0,
+        0.944795673152735
+      ],
+      "camera": {
+        "position": [
+          -0.926,
+          1.67,
+          2.343
+        ],
+        "yaw": -0.543,
+        "pitch": -0.421,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T05-00-45-02.jpg"
+    }
+  ]
+}

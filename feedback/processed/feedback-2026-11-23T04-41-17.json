@@ -1,0 +1,51 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T04:41:17.276Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "ebzfuwrb",
+      "n": 1,
+      "type": "fix",
+      "comment": "mirrror height little bit more, and width little bit more width full from left to right all the wall with little padding let's fix tis and also mke sure all the edgess of theobject to add little round not too sharp for any objects.",
+      "createdAt": "2026-11-23T04:41:16.273Z",
+      "target": {
+        "label": "Mirror",
+        "name": "strip-mirror",
+        "path": "bathroom / east-mirror-strip / strip-mirror",
+        "room": "bathroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          0,
+          0.19,
+          0.9
+        ],
+        "material": {
+          "type": "ShaderMaterial",
+          "color": null
+        }
+      },
+      "point": [
+        -0.1759999999999999,
+        1.3716911125443456,
+        2.582546204435437
+      ],
+      "normal": [
+        -1,
+        0,
+        2.220446049250313e-16
+      ],
+      "camera": {
+        "position": [
+          -0.813,
+          1.62,
+          2.763
+        ],
+        "yaw": -0.902,
+        "pitch": -0.283,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T04-41-17-01.jpg"
+    }
+  ]
+}

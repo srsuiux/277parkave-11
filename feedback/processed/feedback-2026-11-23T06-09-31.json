@@ -1,0 +1,51 @@
+{
+  "project": "apartment",
+  "savedAt": "2026-11-23T06:09:31.260Z",
+  "units": "metres; x=east, y=up, z=south",
+  "notes": [
+    {
+      "id": "4x5jkhib",
+      "n": 1,
+      "type": "fix",
+      "comment": "here the wall mounted heater will be there in bnear the sofa and the foo t area of tmy bed here. the blue bed is mine and oither bed is my roomates bed.",
+      "createdAt": "2026-11-23T06:09:29.229Z",
+      "target": {
+        "label": "Bedroom",
+        "name": "wall-section",
+        "path": "bedroom / bedroom-walls / wall-S / wall-section",
+        "room": "bedroom",
+        "kind": "mesh",
+        "sizeMeters": [
+          4.78,
+          2.45,
+          0.14
+        ],
+        "material": {
+          "type": "MeshStandardMaterial",
+          "color": "#ffffff"
+        }
+      },
+      "point": [
+        1.2076480061953718,
+        1.711061172185644,
+        7.739999999701976
+      ],
+      "normal": [
+        1.2246467991473532e-16,
+        0,
+        -1
+      ],
+      "camera": {
+        "position": [
+          1.568,
+          1.67,
+          5.966
+        ],
+        "yaw": 2.962,
+        "pitch": -0.086,
+        "fov": 75
+      },
+      "screenshot": "shots/2026-11-23T06-09-31-01.jpg"
+    }
+  ]
+}
