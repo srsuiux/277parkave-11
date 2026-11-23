@@ -141,3 +141,17 @@ One connected environment, independent of where the player stands (`src/lighting
   gets a colour solved every frame from daylight x window openness (curtains), bounce from its own lamps, and light leaking through
   open doors. A curtained, closed, unlit room at night is genuinely dark.
 - Limits: no true global illumination or per-window light gradients; ambient is uniform within a room.
+
+## Smart Home Command Center (Tab, or the pill at top-left)
+
+A glass dashboard over the live apartment: Overview, Cameras, Rooms, My Inventory, Environment, plus an expandable Developer info card.
+- **One state.** `src/devices.js` has no state of its own: each device reads/writes the 3D object that owns it (`userData.persist`, door targets,
+  `lightState`, or a `userData.device` hook), and the dashboard polls for changes. A switch flipped in the apartment and one flipped on the
+  dashboard are the same switch. Session persistence is the existing `session.js`.
+- **Cameras** (`src/cameras.js`): independent virtual cameras rendered while the dashboard is open and labelled **simulated**; a real hardware stream
+  would be a different feed `kind`. The first-person camera is never touched.
+- **Inventory** is the layout registry (`layout.movables`): Remove/Add toggles whether an asset is in the apartment and saves via the normal layout
+  save. Models and positions are kept; nothing is deleted.
+- **Environment** shows live weather when the service answers, and "Unavailable" otherwise. There is no indoor sensor, so indoor temperature is Unavailable.
+- Only controls that exist in the 3D scene are exposed. The oven and refrigerator are not interactive or electrically modelled yet, so they appear in
+  inventory but have no power/connection controls.
