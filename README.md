@@ -17,6 +17,20 @@ sit on chairs, use the toilet (lid up, flush, lock the door), take a shower, swi
 
 ![Winter night outside the bedroom window: snowfall, road with cars, street lamps and a snowy park](docs/screenshots/05-window-winter-night.jpg)
 
+### Dynamic day / night cycle
+
+Sunlight really moves through the apartment: a shadow-casting sun crosses the sky, walls, ceilings and window frames cast real
+shadows, and light only gets in through the windows (or an open door), so the bright patches slide across the floor and walls as the
+day goes by. Morning, afternoon, sunset and night each look different, outside too: sky colours, the sun and moon on their arcs,
+clouds, stars, street lamps and car headlights switching on at dusk.
+
+| Afternoon sun through the bedroom window | Morning |
+| --- | --- |
+| ![Afternoon sunlight patches with window-frame shadows](docs/screenshots/06-sunlight-afternoon.jpg) | ![Morning outside the window](docs/screenshots/07-window-morning.jpg) |
+| **Sunset** | **Night** |
+| ![Sunset](docs/screenshots/08-window-sunset.jpg) | ![Night](docs/screenshots/09-window-night.jpg) |
+
+
 ## Run it
 
 ```bash
@@ -39,6 +53,7 @@ Units are metres: `x` = east, `y` = up, `z` = south. Dimensions are estimates fr
 | `R` | bathroom rug on / off |
 | `L` | **Layout mode** — drag, rotate and resize objects |
 | `F` | **Feedback mode** — leave notes pinned to what you see |
+| `T` | jump to the next time of day (morning → afternoon → sunset → night); `[` / `]` = −/+ 1 hour |
 | `P` | save a screenshot of the current view to `docs/screenshots/` (dev server only) |
 | `Esc` | release the mouse |
 
@@ -48,6 +63,8 @@ Units are metres: `x` = east, `y` = up, `z` = south. Dimensions are estimates fr
 src/config.js          room sizes, doors, furniture defaults
 src/main.js            scene, loop, interaction, per-room lighting
 src/shell/             rooms: kitchen, bathroom, bedroom, hallway, walls, winter street view
+src/daycycle.js        day / night cycle: sun + moon arcs, sky colours, shadow-casting light
+src/clockui.js         the clock bar (time, slider, presets, play / pause, speed)
 src/fixtures/          sink, toilet, stove, fridge, lights, rugs, power outlets…
 src/layout.js          Layout mode (drag / resize / save positions)
 src/paint.js           colour modal;  src/wallpaint.js  paintable walls
@@ -58,6 +75,13 @@ layout.json            saved positions, sizes and colours (written by Layout mod
 layout-backups/        automatic copy of the previous layout on every save
 feedback/              notes made in Feedback mode (see below)
 ```
+
+## Time of day
+
+The clock bar at the bottom of the screen shows the time and phase. Drag the slider or press **Morning / Afternoon / Sunset / Night**
+to jump, **Pause / Play** to freeze the sun, and pick a speed (Slow = 20 s per in-game hour … Very fast = 1.5 s). While the mouse is
+captured use **`T`** and **`[` `]`**. The time and speed are remembered in your browser. The sun rises at 6:30, peaks at 34° and
+sets at 17:30 (a winter day); both bedroom and bathroom windows face west, so afternoon and sunset are when the sun reaches inside.
 
 ## Layout mode (`L`) and `layout.json`
 

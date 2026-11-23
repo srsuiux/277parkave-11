@@ -3,6 +3,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { KITCHEN as K, HALLWAY as Hc, PLAYER as P, BATHROOM as BATH, BEDROOM as BED } from './config.js';
 import { setDarkness } from './glowmarks.js';
+import { env as dayEnv, initSun, update as updateDay } from './daycycle.js';
+import { initClockUI } from './clockui.js';
 import { makeMaterials } from './materials.js';
 import { buildKitchen } from './shell/kitchen.js';
 import { buildHallway } from './shell/hallway.js';
@@ -30,6 +32,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;   // the shadow map is re-rendered every 3rd frame (see the frame loop): the scene is mostly static
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 document.body.appendChild(renderer.domElement);
@@ -41,7 +44,7 @@ scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnviron
 scene.environmentIntensity = 0.25;
 setFixtureEnv(scene.environment);
 
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.04, 60);
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.04, 400);
 scene.add(camera);
 
 // ---------- world ----------
@@ -55,6 +58,7 @@ scene.add(kitchen, hallway, rooms, bathroom, bedroom);
 const wallPaints = makeWallsPaintable([kitchen, hallway, rooms, bathroom, bedroom], openPaint);   // every wall: look at it + X to paint
 
 // ---------- lighting (placeholders; real fixtures become their own assets later) ----------
+const sun = initSun(scene);   // sun by day, moon by night: a shadow-casting directional light that crosses the sky (see daycycle.js)
 const hemi = new THREE.HemisphereLight(0xfff2de, 0x4a3a2a, 0.35);
 scene.add(hemi);
 // the room's ambient light follows the ceiling light (switch off = properly dark)
@@ -195,6 +199,8 @@ const fb = initFeedback({
   onEnter: () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; },
   onExit: () => { startEl.style.display = 'grid'; },
 });
+let shadowTick = 0;
+const dayClock = initClockUI({ toast: (m, s) => activities.toast(m, s), isBusy: () => fb.state.edit || layout.state.on || monitor.open || paintUI.open });
 const layout = initLayout({
   scene, camera, renderer, roots: [kitchen, bathroom, bedroom], fb, wallPaints,
   extraObstacles: () => doorSwingBoxes(),
@@ -402,8 +408,11 @@ function step(dt) {
     if (Math.abs(u.target - u.angle) < 0.1) u.angle = u.target;
     u.pivot.rotation.y = u.swing * u.dir * -THREE.MathUtils.degToRad(u.angle);
   }
+  updateDay(dt); dayClock.refresh(); if ((shadowTick = (shadowTick + 1) % 3) === 0) renderer.shadowMap.needsUpdate = true;
   for (const o of updaters) o.userData.update(dt, { camera });
-  { const inBed = player.z > 4.1 && camera.position.x > -1.4; const inCloset = inBed && camera.position.x > 3.27; const want = inCloset ? closetState.level : inBed ? bedroomState.level : kitchenLevel; ambLevel += (want - ambLevel) * Math.min(1, dt * 6); const l = ambLevel < 0.003 ? 0 : ambLevel; hemi.intensity = 0.06 + 0.29 * l; scene.environmentIntensity = 0.05 + 0.2 * l; }
+  { const inBed = player.z > 4.1 && camera.position.x > -1.4; const inCloset = inBed && camera.position.x > 3.27; const want = inCloset ? closetState.level : inBed ? bedroomState.level : kitchenLevel; ambLevel += (want - ambLevel) * Math.min(1, dt * 6); const l = ambLevel < 0.003 ? 0 : ambLevel; const win = { bedroom: 0.55, bath: 0.3, closet: 0.06, hall: 0.1, kitchen: 0.08 }[roomOf(player.x, player.z)] ?? 0.1, dl = dayEnv.dayAmb * win;   // daylight reaching this room's ambient light
+    hemi.color.copy(dayEnv.ambSky); hemi.groundColor.copy(dayEnv.ambGround);
+    hemi.intensity = 0.06 + 0.29 * l + 0.5 * dl; scene.environmentIntensity = 0.05 + 0.2 * l + 0.3 * dl; }
   setDarkness(1 - Math.min(1, ambLevel * 1.6));   // light-switch plates glow faintly in a dark room
   applyRoomLights(dt);
   const looked = fb.state.edit || layout.state.on ? null : lookedAt();

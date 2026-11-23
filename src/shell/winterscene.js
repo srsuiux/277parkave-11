@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { env } from '../daycycle.js';
 
 /**
  * The view out of the bedroom window on a winter evening: a snowy pavement, a road with moving cars (headlights, tail lights,
@@ -67,13 +68,27 @@ export function buildWinter(WL, h, t) {
   const add = (m, parent = group) => { parent.add(m); return m; };
 
   // ---- sky + distant blocks ----
-  const skyMat = basic(0xffffff, { map: skyTexture(), fog: false }); tints.push([skyMat, 0xffffff, 0x7f8aa8]);
+  // the sky follows the time of day (gradient from env), with clouds, stars, the sun and the moon travelling their real arcs
+  const skyU = { top: { value: new THREE.Color() }, hor: { value: new THREE.Color() } };
+  const skyMat = new THREE.ShaderMaterial({ uniforms: skyU, fog: false, depthWrite: false,
+    vertexShader: 'varying float vY; void main(){ vY = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform vec3 top; uniform vec3 hor; varying float vY; void main(){ float t = smoothstep(-6.0, 48.0, vY + 18.0); gl_FragColor = vec4(mix(hor, top, pow(t, 0.7)), 1.0);\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n }' });
   const sky = add(new THREE.Mesh(new THREE.PlaneGeometry(260, 110), skyMat)); sky.position.set(0, 18, -120);
-  const far = add(new THREE.Mesh(new THREE.PlaneGeometry(240, 30), basic(0xffffff, { map: skylineTexture(true, '#4a5468', 0.2), transparent: true, depthWrite: false }))); far.position.set(0, GY + 15, -95);
-  const mid = add(new THREE.Mesh(new THREE.PlaneGeometry(170, 26), basic(0xffffff, { map: skylineTexture(false, '#39435a', 0.32), transparent: true, depthWrite: false }))); mid.position.set(6, GY + 13, -62);
+  const cloudTex = (() => { const [c, g] = canvas(1024, 256); for (let i = 0; i < 120; i++) { const x = rnd() * 1024, y = 40 + rnd() * 170, r = 40 + rnd() * 90, cg = g.createRadialGradient(x, y, 0, x, y, r); cg.addColorStop(0, `rgba(255,255,255,${0.16 + rnd() * 0.2})`); cg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = cg; g.fillRect(x - r, y - r * 0.6, r * 2, r * 1.2); } const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.repeat.set(2, 1); return t; })();
+  const cloudMat = new THREE.MeshBasicMaterial({ map: cloudTex, transparent: true, depthWrite: false, fog: false, color: 0xffffff, opacity: 0.8 });
+  const clouds = add(new THREE.Mesh(new THREE.PlaneGeometry(260, 52), cloudMat)); clouds.position.set(0, 22, -118);
+  const starPos = new Float32Array(900); for (let i = 0; i < 300; i++) { starPos[i * 3] = rr(-120, 120); starPos[i * 3 + 1] = rr(6, 62); starPos[i * 3 + 2] = -116; }
+  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xdfe8ff, size: 1.8, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false });
+  const stars = add(new THREE.Points(starGeo, starMat)); stars.frustumCulled = false;
+  const discTex = radial([[0, 'rgba(255,255,255,1)'], [0.55, 'rgba(255,255,255,1)'], [0.62, 'rgba(255,255,255,0)'], [1, 'rgba(255,255,255,0)']], 128), bigGlow = radial([[0, 'rgba(255,255,255,.9)'], [0.2, 'rgba(255,255,255,.35)'], [1, 'rgba(255,255,255,0)']], 128);
+  const mkBody = (size, glowSize) => { const d = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: discTex, transparent: true, depthWrite: false, fog: false })); const gl = new THREE.Mesh(new THREE.PlaneGeometry(glowSize, glowSize), glowMat(bigGlow)); add(d); add(gl); return { d, gl }; };
+  const sunB = mkBody(9, 90), moonB = mkBody(6.5, 36);
+  const far = add(new THREE.Mesh(new THREE.PlaneGeometry(240, 30), basic(0xffffff, { map: skylineTexture(true, '#4a5468', 0.2), transparent: true, depthWrite: false }))); far.position.set(0, GY + 15, -95); tints.push([far.material, 0xcdd6e6, 0x5a6078]);
+  const mid = add(new THREE.Mesh(new THREE.PlaneGeometry(170, 26), basic(0xffffff, { map: skylineTexture(false, '#39435a', 0.32), transparent: true, depthWrite: false }))); mid.position.set(6, GY + 13, -62); tints.push([mid.material, 0xd9e0ec, 0x4a5068]);
 
   // ---- ground: pavement + road + park, all snow ----
-  const snowM = basic(0xffffff, { map: snowTexture() }); tints.push([snowM, 0xffffff, 0xb9c4dc]);
+  const snowM = basic(0xffffff, { map: snowTexture() }); tints.push([snowM, 0xffffff, 0x8a97bd]);
   const ground = add(new THREE.Mesh(new THREE.PlaneGeometry(300, 140), snowM)); ground.rotation.x = -Math.PI / 2; ground.position.set(0, GY, -70);
   const roadM = basic(0xffffff, { map: roadTexture() });
   const road = add(new THREE.Mesh(new THREE.PlaneGeometry(300, 5.6), roadM)); road.rotation.x = -Math.PI / 2; road.position.set(0, GY + 0.03, ROAD_Z);
@@ -175,16 +190,23 @@ export function buildWinter(WL, h, t) {
     return { ...L, pos, ph, vel, geo, mat, base: L.size };
   });
 
-  const moon = new THREE.PointLight(0x8fb4ff, 0, 5, 2); moon.position.set(0, h * 0.8, 0.5); group.add(moon);   // cold light spilling in when the room is dark
-  let tt = 0, nt = 0, sceneRef = null; const c1 = new THREE.Color(), c2 = new THREE.Color();
+  let tt = 0, nt = 0, sceneRef = null; const c1 = new THREE.Color(), c2 = new THREE.Color(), inv = new THREE.Matrix4(), v = new THREE.Vector3(), WARM = new THREE.Color(0xffb98a), SUNLOW = new THREE.Color(0xff8a3c), SUNHI = new THREE.Color(0xfff4d8), GREY = new THREE.Color(0x8a8d95), LAMP = new THREE.Color(0xffe2b0), FLAKE_N = new THREE.Color(0xc9d8ff), WHITE = new THREE.Color(0xffffff);
   return {
     group,
     update(dt, dark = 0, curtain = 1) {
-      dt = Math.min(dt, 0.1); tt += dt; nt += (dark - nt) * Math.min(1, dt * 2.5);
+      dt = Math.min(dt, 0.1); tt += dt; nt = env.nightK;
+      group.updateWorldMatrix(true, false); inv.copy(group.matrixWorld).invert();
       if (!sceneRef) { let r = group; while (r.parent) r = r.parent; sceneRef = r; if (r.isScene && !r.fog) r.fog = new THREE.Fog(0x8d97aa, 22, 120); }
-      for (const [m, a, b] of tints) m.color.copy(c1.set(a)).lerp(c2.set(b), nt);
-      for (const [m, base] of glows) m.opacity = base * (1 + 0.3 * nt);
-      moon.intensity = nt * 2.2 * curtain;   // closed curtains block the cold light completely
+      for (const [m, a, b] of tints) m.color.copy(c1.set(a)).lerp(c2.set(b), nt).lerp(WARM, env.warm * 0.3);
+      for (const [m, base] of glows) m.opacity = base * (0.04 + 0.96 * env.lampK) * (1 + 0.3 * nt);
+      headM.color.copy(GREY).lerp(LAMP, env.lampK);
+      skyU.top.value.copy(env.skyTop); skyU.hor.value.copy(env.skyHor);
+      cloudMat.color.copy(c1.set(0x2c3550)).lerp(c2.set(0xf2f5fa), env.dayK).lerp(WARM, env.warm * 0.55); cloudMat.opacity = 0.35 + 0.5 * env.dayK; cloudTex.offset.x += dt * 0.0015;
+      starMat.opacity = Math.max(0, env.nightK - 0.25) * (0.75 + 0.25 * Math.sin(tt * 2.1));
+      const place = (dir, body, visible) => { v.copy(dir).transformDirection(inv); const show = visible && v.z < -0.05; body.d.visible = body.gl.visible = show; if (show) { body.d.position.copy(v).multiplyScalar(100); body.gl.position.copy(v).multiplyScalar(99); } return show; };
+      if (place(env.sunDir, sunB, env.sunElev > -2)) { const k = Math.min(1, Math.max(0, env.sunElev / 22)); sunB.d.material.color.copy(SUNLOW).lerp(SUNHI, k); sunB.gl.material.color.copy(SUNLOW).lerp(SUNHI, k); sunB.gl.material.opacity = 0.25 + 0.5 * env.warm; }
+      if (place(env.moonDir, moonB, env.moonElev > -2 && env.nightK > 0.2)) { moonB.d.material.color.set(0xe6edff); moonB.gl.material.color.set(0x9fb4ff); moonB.gl.material.opacity = 0.5 * env.nightK; }
+      if (sceneRef?.fog) sceneRef.fog.color.copy(env.skyHor);
       const gust = 0.5 + 0.5 * Math.sin(tt * 0.23) * Math.sin(tt * 0.071 + 1.3);   // slow gusts: calm -> windy -> calm
       const wind = 0.15 + 0.9 * gust;
       for (const L of layers) {
@@ -198,7 +220,7 @@ export function buildWinter(WL, h, t) {
           if (p[k] > L.x) p[k] -= 2 * L.x;
         }
         L.geo.attributes.position.needsUpdate = true;
-        L.mat.opacity = L.op * (0.9 + 0.1 * nt); L.mat.size = L.base * (1 + 0.18 * nt);
+        L.mat.opacity = L.op * (0.9 + 0.1 * nt); L.mat.size = L.base * (1 + 0.18 * nt); L.mat.color.copy(WHITE).lerp(FLAKE_N, nt * 0.7);
       }
       for (const v of traffic) { v.c.position.x += v.lane.dir * v.v * dt; if (Math.abs(v.c.position.x) > 42) { v.c.position.x = -v.lane.dir * 40; v.v = rr(4.5, 8.5); v.c.children.forEach((m) => { if (m.material?.color && m.material === v.c.userData.body) m.material.color.setHex(palette[Math.floor(Math.random() * palette.length)]); }); } }
     },
