@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import './ui/glass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { KITCHEN as K, HALLWAY as Hc, PLAYER as P, BATHROOM as BATH, BEDROOM as BED } from './config.js';
 import { setDarkness } from './glowmarks.js';
-import { env as dayEnv, initSun, update as updateDay } from './daycycle.js';
-import { initClockUI } from './clockui.js';
+import { env as dayEnv, initSun, update as updateDay, clockText, phaseName } from './daycycle.js';
+import { weather, startWeather, LOCATION } from './weather.js';
 import { makeMaterials } from './materials.js';
 import { buildKitchen } from './shell/kitchen.js';
 import { buildHallway } from './shell/hallway.js';
@@ -19,6 +20,7 @@ import { autoPlacePower } from './fixtures/power.js';
 import { lightState } from './fixtures/lights.js';
 import { initSession } from './session.js';
 import { buildVisitor } from './visitor.js';
+import { buildFirstPersonBody } from './fpbody.js';
 import { initActivities } from './activity.js';
 import { monitor, initMonitorUI } from './monitor.js';
 import { setFixtureEnv } from './fixtures/mats.js';
@@ -142,17 +144,24 @@ scene.traverse((o) => {
 });
 
 // ---------- colliders ----------
-const walls = [];
+const walls = [], dynSolids = [], dynBoxes = [];   // dynSolids: colliders that only exist while active (e.g. an open cupboard door), re-boxed every frame
 const hiddenAbove = (m) => { for (let p = m.parent; p; p = p.parent) if (!p.visible) return true; return false; };
 function rebuildColliders() {
-  walls.length = 0;
+  walls.length = 0; dynSolids.length = 0;
   scene.updateMatrixWorld(true);
   scene.traverse((o) => {
-    if (o.isMesh && o.userData.collider && !hiddenAbove(o)) walls.push(new THREE.Box3().setFromObject(o));
+    if (o.isMesh && o.userData.collider === 'dyn') dynSolids.push(o);
+    else if (o.isMesh && o.userData.collider && !hiddenAbove(o)) walls.push(new THREE.Box3().setFromObject(o));
   });
 }
 rebuildColliders();
 
+const doorSegs = []; let ignoreOpenDoors = false; const _h = new THREE.Vector3(), _t = new THREE.Vector3();
+function refreshDoorSegs() {
+  dynBoxes.length = 0; for (const m of dynSolids) if (m.userData.active?.() && !hiddenAbove(m)) { m.updateWorldMatrix(true, false); dynBoxes.push(new THREE.Box3().setFromObject(m)); }
+  doorSegs.length = 0;
+  for (const d of doors) { const { pivot, slab, dir } = d.userData; pivot.updateWorldMatrix(true, false); pivot.getWorldPosition(_h); _t.set(dir * slab.geometry.parameters.width, 0, 0).applyMatrix4(pivot.matrixWorld); doorSegs.push({ door: d, ax: _h.x, az: _h.z, bx: _t.x, bz: _t.z }); }
+}
 function blocked(x, z) {
   const r = P.radius;
   const test = (b) => {
@@ -161,22 +170,59 @@ function blocked(x, z) {
     return (x - cx) ** 2 + (z - cz) ** 2 < r * r;
   };
   for (const b of walls) if (test(b)) return true;
-  for (const d of doors) if (d.userData.angle < 12 && test(doorBoxes.get(d))) return true;
+  for (const b of dynBoxes) if (test(b)) return true;
+  // doors: the leaf is a thick line from its hinge to its free edge, re-read every frame, so a door blocks you wherever it is
+  // (closed, mid-swing or open) and never lets you stand inside it
+  for (const s of doorSegs) {
+    if (ignoreOpenDoors && !s.door.userData.locked) continue;
+    const abx = s.bx - s.ax, abz = s.bz - s.az, t = Math.max(0, Math.min(1, ((x - s.ax) * abx + (z - s.az) * abz) / (abx * abx + abz * abz)));
+    const dx = x - (s.ax + abx * t), dz = z - (s.az + abz * t), rr = r + 0.035;
+    if (dx * dx + dz * dz < rr * rr) return true;
+  }
   return false;
 }
 
-/** Nearest spot where the player fits (spiral search), or null. Used to get you out if you ever end up stuck inside something. */
-function nearestFree(x, z) {
+// ---------- apartment interior (anti-escape safety net) ----------
+// Flood-fill the floor from the kitchen with every ordinary door open: whatever is reachable is the apartment (walls are sealed,
+// the sealed east door stays shut). Anything farther than 0.2 m from that area is "outside", and the player is never allowed there.
+const GRID = 0.05, GX0 = -3, GX1 = 5.4, GZ0 = -5.2, GZ1 = 8.2, GNX = Math.round((GX1 - GX0) / GRID), GNZ = Math.round((GZ1 - GZ0) / GRID);
+let interior = null;
+function computeInterior() {
+  ignoreOpenDoors = true;   // flood with every ordinary door open
+  const seen = new Uint8Array(GNX * GNZ), q = [];
+  const start = nearestFreeRaw(KITCHEN_SPAWN.x, KITCHEN_SPAWN.z); if (start) { const i0 = Math.round((start.x - GX0) / GRID), j0 = Math.round((start.z - GZ0) / GRID); seen[j0 * GNX + i0] = 1; q.push(j0 * GNX + i0); }
+  for (let h = 0; h < q.length; h++) {
+    const c = q[h], i = c % GNX, j = (c - i) / GNX;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= GNX || b >= GNZ || seen[b * GNX + a]) continue; if (blocked(GX0 + a * GRID, GZ0 + b * GRID)) continue; seen[b * GNX + a] = 1; q.push(b * GNX + a); }
+  }
+  ignoreOpenDoors = false;
+  interior = seen;
+}
+function insideApartment(x, z) {
+  if (!interior) return true;
+  const R = Math.ceil(0.2 / GRID), ci = Math.round((x - GX0) / GRID), cj = Math.round((z - GZ0) / GRID);
+  for (let dj = -R; dj <= R; dj++) for (let di = -R; di <= R; di++) { const a = ci + di, b = cj + dj; if (a >= 0 && b >= 0 && a < GNX && b < GNZ && interior[b * GNX + a] && (di * di + dj * dj) * GRID * GRID <= 0.04) return true; }
+  return false;
+}
+function nearestFreeRaw(x, z) {
   if (!blocked(x, z)) return { x, z };
+  for (let r = 0.05; r <= 1.5; r += 0.05) for (let a = 0; a < 24; a++) { const px = x + Math.cos((a / 24) * Math.PI * 2) * r, pz = z + Math.sin((a / 24) * Math.PI * 2) * r; if (!blocked(px, pz)) return { x: px, z: pz }; }
+  return null;
+}
+/** Nearest spot INSIDE the apartment where the player fits (spiral search), or null. Used to get you out if you ever end up stuck inside something. */
+function nearestFree(x, z) {
+  if (!blocked(x, z) && insideApartment(x, z)) return { x, z };
   for (let r = 0.05; r <= 2.5; r += 0.05) {
     for (let a = 0; a < 24; a++) {
       const px = x + Math.cos((a / 24) * Math.PI * 2) * r, pz = z + Math.sin((a / 24) * Math.PI * 2) * r;
-      if (!blocked(px, pz)) return { x: px, z: pz };
+      if (!blocked(px, pz) && insideApartment(px, pz)) return { x: px, z: pz };
     }
   }
   return null;
 }
 const KITCHEN_SPAWN = { x: 1.5, z: 1.7 };   // middle of the kitchen, on the rug
+refreshDoorSegs(); computeInterior();
+const lastGood = { x: player.x, z: player.z };
 function toKitchen() { const p = nearestFree(KITCHEN_SPAWN.x, KITCHEN_SPAWN.z); player.x = p.x; player.z = p.z; camera.rotation.set(0, Math.PI, 0); }
 
 // ---------- player ----------
@@ -188,6 +234,7 @@ camera.rotation.set(-0.03, 0, 0); // looking +z (toward the kitchen)
 camera.rotation.y = Math.PI;      // PointerLock's default faces -z; flip to face +z
 const visitor = buildVisitor();   // your own legs and shoes, planted on the floor
 scene.add(visitor.group);
+const fpBody = buildFirstPersonBody(scene, camera);   // your own torso, sleeves and hands (first person only, see fpbody.js)
 const session = initSession({ scene, doors, lightState, player, camera });   // restores this session's state, if any
 window.__session = session;
 if (blocked(player.x, player.z)) toKitchen();   // a restored position inside something solid -> kitchen
@@ -200,7 +247,11 @@ const fb = initFeedback({
   onExit: () => { startEl.style.display = 'grid'; },
 });
 let shadowTick = 0;
-const dayClock = initClockUI({ toast: (m, s) => activities.toast(m, s), isBusy: () => fb.state.edit || layout.state.on || monitor.open || paintUI.open });
+startWeather();   // live Youngstown, OH weather (Open-Meteo), refreshed every 10 minutes
+const hud = document.createElement('div');
+hud.className = 'g-glass g-pill'; hud.style.cssText = 'left:50%;bottom:16px;transform:translateX(-50%);z-index:12;text-align:center;pointer-events:none;line-height:1.45;animation:none';
+document.body.appendChild(hud); let hudT = 0;
+function updateHud(dt) { hudT -= dt; if (hudT > 0) return; hudT = 1; hud.innerHTML = `<b class="g-head">${LOCATION.name}</b> &middot; ${LOCATION.city}<br>${clockText()} &middot; ${phaseName()} &middot; ${weather.loaded ? weather.label + ', ' + Math.round(weather.tempF) + '\u00b0F' : 'weather loading\u2026'}`; }
 const layout = initLayout({
   scene, camera, renderer, roots: [kitchen, bathroom, bedroom], fb, wallPaints,
   extraObstacles: () => doorSwingBoxes(),
@@ -226,11 +277,12 @@ addEventListener('keydown', (e) => {
   if (!layout.state.on && !fb.state.edit) {
     if (e.code === 'KeyY') { if (activities.active) activities.stop(); else { const it = lookedAt()?.item; if (it?.userData.seat) activities.sit(it); else activities.useNearby(); } }
     if (e.code === 'KeyQ' && lookedAt()?.door === bathDoor) toggleBolt();
+    if (e.code === 'KeyG') entryLockAction();
+    if (e.code === 'KeyH') cycleHands();
     if (e.code === 'Space' && activities.active) { activities.scroll(1); e.preventDefault(); }
-    if (e.code === 'KeyV') activities.view.third = !activities.view.third;   // first / third person
   }
-  if (e.code === 'KeyE' && !layout.state.on) toggleDoor();
-  if (!layout.state.on && !fb.state.edit) { const act = lookedAt()?.item?.userData.interact.keys?.[e.code]; if (act) act(); }   // extra per-object keys, e.g. C / T on the shower curtain
+  if (e.code === 'KeyE' && !layout.state.on && !fpBody.busy) toggleDoor();
+  if (!layout.state.on && !fb.state.edit) { const h = lookedAt(), act = h?.item?.userData.interact.keys?.[e.code]; if (act) { if (h.point) fpBody.reach(h.point, 'press'); act(); } }   // extra per-object keys, e.g. C / T on the shower curtain
   if (e.code === 'KeyK' && !layout.state.on && !fb.state.edit) toKitchen();   // stuck? K takes you to the kitchen
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
@@ -255,8 +307,8 @@ function lookedAt() {
   const hits = ray.intersectObjects(targets, true).filter((h) => !hiddenAbove(h.object) && h.object.visible !== false);
   if (!hits.length) return null;
   for (let o = hits[0].object; o; o = o.parent) {
-    if (o.userData.isDoor) return { door: o };
-    if (o.userData.interact) return { item: o };
+    if (o.userData.isDoor) return { door: o, point: hits[0].point };
+    if (o.userData.interact) return { item: o, point: hits[0].point };
   }
   return null;
 }
@@ -335,6 +387,46 @@ if (bathDoor) {
   const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.008, 18), base); plate.rotation.x = Math.PI / 2;
   const holder = new THREE.Group(); holder.position.set(dirB * (w / 2 - 0.07), 1.2, -0.05); holder.add(plate, boltMesh); bathDoor.userData.leaf.add(holder);
 }
+// ---------- hand position control: chips bottom-left + H key (saved in localStorage, so it survives rooms and reloads) ----------
+const HAND_LABEL = { auto: 'Auto (up when interacting)', up: 'Hands up', natural: 'Natural rest', down: 'Hands down' };
+const handUI = document.createElement('div');
+handUI.className = 'g-glass g-pill g-row'; handUI.style.cssText = 'left:16px;bottom:16px;z-index:12;padding:5px 8px 5px 14px;gap:10px';
+handUI.innerHTML = '<span class="g-sub g-small">Hands <kbd>H</kbd></span><span class="g-seg">' + fpBody.modes.map((m) => `<button data-m="${m}" title="${HAND_LABEL[m]}">${{ auto: 'Auto', up: 'Up', natural: 'Natural', down: 'Down' }[m]}</button>`).join('') + '</span>';
+document.body.appendChild(handUI);
+const refreshHandUI = () => handUI.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.m === fpBody.mode));
+function setHands(m) { fpBody.setMode(m); refreshHandUI(); activities.toast('Hands: ' + HAND_LABEL[m], 1.6); }
+function cycleHands() { setHands(fpBody.modes[(fpBody.modes.indexOf(fpBody.mode) + 1) % fpBody.modes.length]); }
+handUI.addEventListener('pointerdown', (e) => e.stopPropagation()); handUI.addEventListener('keydown', (e) => e.stopPropagation());
+handUI.querySelectorAll('button').forEach((b) => { b.onclick = () => { setHands(b.dataset.m); b.blur(); }; }); refreshHandUI();
+
+// ---------- entrance door: key deadbolt (G). From the hallway you use your key, from inside the thumb-turn ----------
+const entry = doors.find((d) => d.name === 'north-door');
+let entryBolt = null, entryThumb = null; const EB = { out: -0.03, inn: -0.005 };
+if (entry) {
+  const dirE = entry.userData.dir, wE = K.doors.find((x) => x.id === 'north-door').w;
+  entryBolt = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.05, 14).rotateZ(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xb8964a, roughness: 0.3, metalness: 0.9 }));
+  entryBolt.castShadow = true; entryBolt.userData.dir = dirE; entryBolt.userData.w = wE; entryBolt.position.set(dirE * (wE / 2 + EB.out), 1.12, 0); entry.userData.leaf.add(entryBolt);
+  entryThumb = entry.getObjectByName('hardware-room-side')?.getObjectByName('deadbolt')?.children.find((c) => c.geometry?.parameters?.width === 0.05) ?? null;
+  try { if (localStorage.getItem('entry-bolt') === '1') { entry.userData.bolt = true; entry.userData.target = 0; entry.userData.angle = 0; } } catch { /* no storage */ }
+}
+function entryLockAction() {
+  if (!entry || fpBody.busy) return;
+  if (lookedAt()?.door !== entry) return;
+  if (entry.userData.angle > 8) { activities.toast('Close the door first, then lock it'); return; }
+  const outside = player.z < -0.07;
+  const dead = entry.getObjectByName(outside ? 'hardware-far-side' : 'hardware-room-side')?.getObjectByName('deadbolt'); if (!dead) return;
+  scene.updateMatrixWorld(true); const pt = dead.getWorldPosition(new THREE.Vector3()); pt.z += outside ? -0.02 : 0.02;
+  const dist = Math.hypot(player.x - pt.x, player.z - pt.z);
+  if (dist > 1.7) { activities.toast('Step closer to the lock'); return; }
+  const lock = !entry.userData.bolt;
+  const go = () => fpBody.keyAction(pt, { useKey: outside, turnDir: lock ? 1 : -1, onTurn: () => {
+    entry.userData.bolt = lock; try { localStorage.setItem('entry-bolt', lock ? '1' : '0'); } catch { /* no storage */ }
+    activities.toast(lock ? (outside ? 'Door locked with your key' : 'Deadbolt locked') : (outside ? 'Door unlocked with your key' : 'Deadbolt unlocked'), 1.8);
+  } });
+  if (dist <= 0.62) go();
+  else { const ux = (player.x - pt.x) / dist, uz = (player.z - pt.z) / dist; approach = { x: pt.x + ux * 0.5, z: pt.z + uz * 0.5, go }; }   // walk up to the lock first, like a person would
+}
+let approach = null;
 function toggleBolt() {
   if (!bathDoor || !inBath()) return;
   if (bathDoor.userData.angle > 8) { activities.toast('Close the door first, then lock it'); return; }
@@ -343,9 +435,12 @@ function toggleBolt() {
 }
 function toggleDoor() {
   const hit = lookedAt();
-  if (hit?.item) { hit.item.userData.interact.run(); return; }
+  if (hit?.item) { const why = hit.item.userData.interact.guard?.(player.x, player.z); if (why) { activities.toast(why); return; } if (hit.point) fpBody.reach(hit.point, hit.item.userData.interact.reach ?? 'press'); hit.item.userData.interact.run(); return; }
   const d = hit?.door;
-  if (!d || d.userData.locked) return;
+  if (!d) return;
+  if (hit.point) fpBody.reach(hit.point, 'grab');
+  if (d.userData.locked) return;
+  if (d.userData.bolt && d === entry) { activities.toast(player.z < -0.07 ? 'Locked. Press G to unlock it with your key' : 'Locked. Press G to turn the deadbolt'); return; }
   if (d.userData.bolt) { activities.toast(inBath() ? 'The door is locked - press Q to unlock it' : 'Locked from the inside - someone is in there'); return; }
   if (d === bathDoor && inBath() && activities.needsFlush && d.userData.target < 5) { activities.toast('Flush the toilet before you leave!'); return; }
   d.userData.target = d.userData.target > 5 ? 0 : clearAngle(d);
@@ -361,9 +456,10 @@ function toggleDoor() {
 // ---------- loop ----------
 const clock = new THREE.Clock();
 const fwd = new THREE.Vector3(), right = new THREE.Vector3();
-let visitorFacing = null;
+let visitorFacing = null, lookedNow = null;
 
 function step(dt) {
+  refreshDoorSegs();
   // arrow-key look (fallback when the mouse isn't captured)
   const turn = 1.8 * dt;
   if (keys.has('ArrowLeft')) camera.rotation.y += turn;
@@ -375,6 +471,12 @@ function step(dt) {
   fwd.y = 0; fwd.normalize();
   right.set(-fwd.z, 0, fwd.x);
 
+  if (approach) {
+    if (['KeyW', 'KeyA', 'KeyS', 'KeyD'].some((k) => keys.has(k))) approach = null;
+    else { const dx = approach.x - player.x, dz = approach.z - player.z, dd = Math.hypot(dx, dz), st = 1.4 * dt;
+      if (dd <= st) { player.x = approach.x; player.z = approach.z; const g = approach.go; approach = null; g(); }
+      else if (!blocked(player.x + dx / dd * st, player.z + dz / dd * st)) { player.x += dx / dd * st; player.z += dz / dd * st; player.bob += dt * 6; } else approach = null; }
+  }
   if (activities.wantsUp(keys)) activities.stop();
   activities.tick(dt);
   let mx = 0, mz = 0;
@@ -388,19 +490,22 @@ function step(dt) {
   if (moving) {
     const speed = (keys.has('ShiftLeft') || keys.has('ShiftRight') ? P.run : P.walk) * dt;
     mx = (mx / len) * speed; mz = (mz / len) * speed;
-    // axis-separated so you slide along walls
-    if (!blocked(player.x + mx, player.z)) player.x += mx;
-    if (!blocked(player.x, player.z + mz)) player.z += mz;
+    // small sub-steps (never more than 4 cm at a time, so no frame hitch can skip over a wall), axis-separated so you slide along walls
+    const n = Math.max(1, Math.ceil(Math.hypot(mx, mz) / 0.04)), sx = mx / n, sz = mz / n;
+    for (let i = 0; i < n; i++) { if (!blocked(player.x + sx, player.z)) player.x += sx; if (!blocked(player.x, player.z + sz)) player.z += sz; }
     player.bob += dt * (keys.has('ShiftLeft') ? 11 : 7.5);
   }
   const bobY = P.eye + (moving ? Math.sin(player.bob) * 0.012 : 0), seatedY = activities.pose && activities.pose.kind !== 'shower' ? activities.pose.y - 0.87 + P.eye : P.eye;
   activities.placeCamera(activities.pose ? seatedY : bobY);
   if (!activities.active && blocked(player.x, player.z)) { const p = nearestFree(player.x, player.z); if (p) { player.x = p.x; player.z = p.z; } }   // never stay stuck inside a wall or object
+  if (!activities.active) { if (insideApartment(player.x, player.z)) { lastGood.x = player.x; lastGood.z = player.z; } else { player.x = lastGood.x; player.z = lastGood.z; } }   // never end up outside the apartment
   const facing = moving ? Math.atan2(-mx, -mz) : null;
-  visitor.update(dt, player, camera, moving, !(layout.state.on || fb.state.edit), { pose: activities.pose, third: activities.view.third, facing: facing ?? visitorFacing });
+  visitor.update(dt, player, camera, moving, !(layout.state.on || fb.state.edit), { pose: activities.pose, third: false, facing: facing ?? visitorFacing });
   if (facing != null) visitorFacing = facing;
+  fpBody.update(dt, { aim: !!lookedNow, visible: !(layout.state.on || fb.state.edit), moving, running: keys.has('ShiftLeft') || keys.has('ShiftRight'), bob: player.bob, kind: activities.active?.kind ?? 'stand', desk: !!activities.active?.desk });
 
   // doors
+  if (entryBolt) { const tx = entryBolt.userData.dir * (entryBolt.userData.w / 2 + (entry.userData.bolt ? EB.inn : EB.out)); entryBolt.position.x += (tx - entryBolt.position.x) * Math.min(1, dt * 10); if (entryThumb) entryThumb.rotation.z += ((entry.userData.bolt ? Math.PI / 2 + 0.1 : 0.1) - entryThumb.rotation.z) * Math.min(1, dt * 10); }
   if (boltMesh) boltMesh.rotation.z += ((bathDoor.userData.bolt ? Math.PI / 2 : 0) - boltMesh.rotation.z) * Math.min(1, dt * 12);
   for (const d of doors) {
     const u = d.userData;
@@ -408,19 +513,20 @@ function step(dt) {
     if (Math.abs(u.target - u.angle) < 0.1) u.angle = u.target;
     u.pivot.rotation.y = u.swing * u.dir * -THREE.MathUtils.degToRad(u.angle);
   }
-  updateDay(dt); dayClock.refresh(); if ((shadowTick = (shadowTick + 1) % 3) === 0) renderer.shadowMap.needsUpdate = true;
+  updateDay(); updateHud(dt); if ((shadowTick = (shadowTick + 1) % 3) === 0) renderer.shadowMap.needsUpdate = true;
   for (const o of updaters) o.userData.update(dt, { camera });
   { const inBed = player.z > 4.1 && camera.position.x > -1.4; const inCloset = inBed && camera.position.x > 3.27; const want = inCloset ? closetState.level : inBed ? bedroomState.level : kitchenLevel; ambLevel += (want - ambLevel) * Math.min(1, dt * 6); const l = ambLevel < 0.003 ? 0 : ambLevel; const win = { bedroom: 0.55, bath: 0.3, closet: 0.06, hall: 0.1, kitchen: 0.08 }[roomOf(player.x, player.z)] ?? 0.1, dl = dayEnv.dayAmb * win;   // daylight reaching this room's ambient light
     hemi.color.copy(dayEnv.ambSky); hemi.groundColor.copy(dayEnv.ambGround);
     hemi.intensity = 0.06 + 0.29 * l + 0.5 * dl; scene.environmentIntensity = 0.05 + 0.2 * l + 0.3 * dl; }
   setDarkness(1 - Math.min(1, ambLevel * 1.6));   // light-switch plates glow faintly in a dark room
   applyRoomLights(dt);
-  const looked = fb.state.edit || layout.state.on ? null : lookedAt();
+  const looked = fb.state.edit || layout.state.on ? null : lookedAt(); lookedNow = looked && looked.point && looked.point.distanceTo(camera.position) < 1.6 ? looked : null;
   const ah = fb.state.edit || layout.state.on ? null : activities.toastText() ?? activities.hint();
   if (ah && !looked?.item) { promptEl.innerHTML = ah; promptEl.style.opacity = 1; }
   else if (looked?.item) promptEl.innerHTML = looked.item.userData.interact.prompt();
   else promptEl.innerHTML = looked?.door?.userData.locked
     ? '🔒 Locked — this door opens to the hallway'
+    : looked?.door === entry ? (entry.userData.bolt ? `🔒 Locked &nbsp; <kbd>G</kbd> unlock ${player.z < -0.07 ? 'with your key' : '(deadbolt)'}` : `<kbd>E</kbd> open / close door &nbsp; <kbd>G</kbd> lock ${player.z < -0.07 ? 'with your key' : '(deadbolt)'}`)
     : looked?.door === bathDoor && inBath() ? `<kbd>E</kbd> open / close door &nbsp; <kbd>Q</kbd> ${bathDoor.userData.bolt ? 'unlock' : 'lock'}`
     : looked?.door === bathDoor && bathDoor.userData.bolt ? '🔒 Locked from the inside'
     : '<kbd>E</kbd> open / close door';
@@ -452,4 +558,4 @@ async function snapshot(name = 'snapshot-' + new Date().toISOString().replace(/[
 }
 addEventListener('keydown', (e) => { if (e.code === 'KeyP' && !e.repeat && !fb.isTyping(e) && !paintUI.open && !layout.state.on) snapshot(); });
 
-window.__fp = { snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };
+window.__fp = { inside: insideApartment, setTime(ms) { dayEnv.override = ms; }, setWeather: (o) => Object.assign(weather, o), snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };
