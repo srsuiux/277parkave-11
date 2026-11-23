@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { env } from '../daycycle.js';
+import { weather } from '../weather.js';
 
 /**
  * The view out of the bedroom window on a winter evening: a snowy pavement, a road with moving cars (headlights, tail lights,
@@ -11,7 +12,7 @@ import { env } from '../daycycle.js';
  * Local space = the window group: x runs along the window, y up from the sill, -z is OUTSIDE. Ground is GY below the sill.
  * Everything is unlit (basic) or self-lit so it looks the same whether the room lights are on or off.
  */
-const GY = -3.0;           // ground level relative to the sill
+const GY = -7.3;       // the apartment is on the THIRD floor: the street is about 7 m below the sill
 const ROAD_Z = -9.5;       // road centre line
 let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const rr = (a, b) => a + rnd() * (b - a);
@@ -122,7 +123,8 @@ export function buildWinter(WL, h, t) {
   const rail = add(new THREE.Mesh(new THREE.BoxGeometry(72, 0.04, 0.05), postM)); rail.position.set(0, GY + 0.85, -12.6);
   const railSnow = add(new THREE.Mesh(new THREE.BoxGeometry(72, 0.03, 0.08), capM)); railSnow.position.set(0, GY + 0.885, -12.6);
 
-  const pineGreen = std(0x1f3b31, 0.9, 0, 0x0c1a15, 0.6), pineSnow = basic(0xe6edf6);
+  const snowy = [], drifts = [];   // snow caps tint toward bare colours, drifts hide, when it isn't snowy
+  const pineGreen = std(0x1f3b31, 0.9, 0, 0x0c1a15, 0.6), pineSnow = basic(0xe6edf6); snowy.push(pineSnow, capM);
   const pine = (x, z, s) => { const g = add(new THREE.Group()); g.position.set(x, GY, z); g.scale.setScalar(s);
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.0, 8), std(0x3a2a20)); trunk.position.y = 0.5; g.add(trunk);
     [[1.25, 1.7, 0.7], [1.0, 1.5, 1.7], [0.72, 1.3, 2.6]].forEach(([r, hh, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, hh, 14), pineGreen); c.position.y = y + hh / 2; g.add(c); const sn = new THREE.Mesh(new THREE.ConeGeometry(r * 1.035, hh * 0.86, 14), pineSnow); sn.position.y = y + hh * 0.14 + hh * 0.43; g.add(sn); });
@@ -132,7 +134,7 @@ export function buildWinter(WL, h, t) {
     const br = (px, py, dir, len, rad, d) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.7, rad, len, 6), m); const e = dir.clone().multiplyScalar(len); c.position.set(px + e.x / 2, py + e.y / 2, e.z / 2); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); g.add(c); if (d < 4) for (let k = 0; k < 2; k++) br(px + e.x, py + e.y, dir.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), (k ? 1 : -1) * rr(0.4, 0.7)).applyAxisAngle(new THREE.Vector3(0, 1, 0), rr(0, 6)).normalize(), len * 0.72, rad * 0.65, d + 1); };
     br(0, 0, new THREE.Vector3(0, 1, 0), 2.6, 0.16, 0); return g; };
   for (let i = 0; i < 7; i++) bare(rr(-30, 30), rr(-16, -30), rr(0.9, 1.5));
-  for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 8), basic(0xe7edf6)); m.scale.set(rr(1.2, 5), rr(0.18, 0.5), rr(0.9, 3)); m.position.set(rr(-40, 40), GY, rr(-15, -55)); add(m); }   // drifts
+  for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 8), basic(0xe7edf6)); m.scale.set(rr(1.2, 5), rr(0.18, 0.5), rr(0.9, 3)); m.position.set(rr(-40, 40), GY, rr(-15, -55)); add(m); drifts.push(m); }   // drifts
 
   const bench = add(new THREE.Group()); bench.position.set(-4.5, GY, -17);
   { const seat = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.07, 0.5), std(0x5a4130)); seat.position.y = 0.46; bench.add(seat); const back = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.4, 0.06), std(0x5a4130)); back.position.set(0, 0.75, -0.22); back.rotation.x = -0.15; bench.add(back);
@@ -146,10 +148,10 @@ export function buildWinter(WL, h, t) {
 
   // ---- cars ----
   const beamTex = (() => { const [c, g] = canvas(256, 64); const gr = g.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, 'rgba(255,245,215,.95)'); gr.addColorStop(0.35, 'rgba(255,240,200,.35)'); gr.addColorStop(1, 'rgba(255,240,200,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 64); const m = g.createLinearGradient(0, 0, 0, 64); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(0.5, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)'); g.globalCompositeOperation = 'destination-out'; g.fillStyle = m; g.fillRect(0, 0, 256, 64); return new THREE.CanvasTexture(c); })();
-  const glass = std(0x10161f, 0.15, 0.6), tire = std(0x151515, 0.9), headL = basic(0xfff4d6), tailL = basic(0xff2a1a), snowCap = basic(0xf1f5fa);
+  const glass = std(0x2a3547, 0.15, 0.4, 0x1a2536, 0.6), tire = std(0x151515, 0.9), headL = basic(0xfff4d6), tailL = basic(0xff2a1a), snowCap = basic(0xf1f5fa); snowy.push(snowCap);
   const glowDot = radial([[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,255,255,.4)'], [1, 'rgba(255,255,255,0)']], 64);
   function car(colorHex, kind = 'sedan', parked = false) {
-    const g = new THREE.Group(), L = kind === 'van' ? 5.2 : 4.5, Hh = kind === 'van' ? 1.9 : 1.45, body = std(colorHex, 0.35, 0.45, colorHex, 0.22);
+    const g = new THREE.Group(), L = kind === 'van' ? 5.2 : 4.5, Hh = kind === 'van' ? 1.9 : 1.45, body = std(colorHex, 0.4, 0.2, colorHex, 0.5);
     const b = new THREE.Mesh(new RoundedBoxGeometry(L, 0.78, 1.82, 3, 0.2), body); b.position.y = 0.62; g.add(b);
     const cabL = kind === 'van' ? L - 0.5 : 2.4, cab = new THREE.Mesh(new RoundedBoxGeometry(cabL, Hh - 1.0, 1.62, 3, 0.22), body); cab.position.set(kind === 'van' ? 0 : -0.25, 1.0 + (Hh - 1.0) / 2 - 0.0, 0); g.add(cab);
     const win = new THREE.Mesh(new RoundedBoxGeometry(cabL * 0.92, (Hh - 1.0) * 0.6, 1.66, 2, 0.1), glass); win.position.set(cab.position.x, cab.position.y + 0.02, 0); g.add(win);
@@ -190,6 +192,17 @@ export function buildWinter(WL, h, t) {
     return { ...L, pos, ph, vel, geo, mat, base: L.size };
   });
 
+  // ---- rain: streaks falling at the glass and beyond (shown only when the live weather says rain) ----
+  const RN = 1400, rainPos = new Float32Array(RN * 6), rainSeed = new Float32Array(RN * 3);
+  for (let i = 0; i < RN; i++) { rainSeed[i * 3] = rr(-22, 22); rainSeed[i * 3 + 1] = rr(GY, 9); rainSeed[i * 3 + 2] = rr(-0.4, -30); }
+  const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+  const rainMat = new THREE.LineBasicMaterial({ color: 0xbcd0e8, transparent: true, opacity: 0, depthWrite: false });
+  const rainLines = new THREE.LineSegments(rainGeo, rainMat); rainLines.frustumCulled = false; rainLines.renderOrder = 3; group.add(rainLines);
+  const GROUND_BARE = new THREE.Color(0x5d6064), GROUND_SNOW = new THREE.Color(0xffffff);
+  // everything on the ground (road, traffic, lamps, fence, park, parked cars) sits a bit farther out, seen from the third floor
+  { const keep = new Set([sky, clouds, stars, sunB.d, sunB.gl, moonB.d, moonB.gl, far, mid, ground, ledge, drops, path, rainLines]); const street = new THREE.Group(); street.name = 'street-level'; street.position.z = -3;
+    for (const c of [...group.children]) if (!keep.has(c) && !c.isPoints && !c.isLineSegments) street.add(c);
+    group.add(street); }
   let tt = 0, nt = 0, sceneRef = null; const c1 = new THREE.Color(), c2 = new THREE.Color(), inv = new THREE.Matrix4(), v = new THREE.Vector3(), WARM = new THREE.Color(0xffb98a), SUNLOW = new THREE.Color(0xff8a3c), SUNHI = new THREE.Color(0xfff4d8), GREY = new THREE.Color(0x8a8d95), LAMP = new THREE.Color(0xffe2b0), FLAKE_N = new THREE.Color(0xc9d8ff), WHITE = new THREE.Color(0xffffff);
   return {
     group,
@@ -206,9 +219,12 @@ export function buildWinter(WL, h, t) {
       const place = (dir, body, visible) => { v.copy(dir).transformDirection(inv); const show = visible && v.z < -0.05; body.d.visible = body.gl.visible = show; if (show) { body.d.position.copy(v).multiplyScalar(100); body.gl.position.copy(v).multiplyScalar(99); } return show; };
       if (place(env.sunDir, sunB, env.sunElev > -2)) { const k = Math.min(1, Math.max(0, env.sunElev / 22)); sunB.d.material.color.copy(SUNLOW).lerp(SUNHI, k); sunB.gl.material.color.copy(SUNLOW).lerp(SUNHI, k); sunB.gl.material.opacity = 0.25 + 0.5 * env.warm; }
       if (place(env.moonDir, moonB, env.moonElev > -2 && env.nightK > 0.2)) { moonB.d.material.color.set(0xe6edff); moonB.gl.material.color.set(0x9fb4ff); moonB.gl.material.opacity = 0.5 * env.nightK; }
-      if (sceneRef?.fog) sceneRef.fog.color.copy(env.skyHor);
-      const gust = 0.5 + 0.5 * Math.sin(tt * 0.23) * Math.sin(tt * 0.071 + 1.3);   // slow gusts: calm -> windy -> calm
-      const wind = 0.15 + 0.9 * gust;
+      if (sceneRef?.fog) { sceneRef.fog.color.copy(env.skyHor); const fg = Math.min(1, weather.fog + weather.cloud / 400); sceneRef.fog.near = 22 - 18 * fg; sceneRef.fog.far = 120 - 85 * fg; }
+      { const sc = weather.snowCover; for (const m of snowy) m.color.copy(c2.set(0x4a4f52)).lerp(WHITE, sc); for (const d of drifts) d.visible = sc > 0.35; }
+      snowM.color.multiply(c2.copy(GROUND_BARE).lerp(GROUND_SNOW, weather.snowCover));   // bare, wet ground when there is no snow on it
+      road.material.color.copy(WHITE).lerp(c1.set(0x9aa0a8), 1 - weather.snowCover * 0.6);
+      const gust = 0.5 + 0.5 * Math.sin(tt * 0.23) * Math.sin(tt * 0.071 + 1.3);   // slow gusts
+      const wk = Math.min(2.5, weather.windKmh / 15), wind = (0.1 + 0.9 * gust) * wk;   // live wind speed
       for (const L of layers) {
         const p = L.pos, ph = L.ph;
         for (let i = 0; i < L.n; i++) {
@@ -220,8 +236,10 @@ export function buildWinter(WL, h, t) {
           if (p[k] > L.x) p[k] -= 2 * L.x;
         }
         L.geo.attributes.position.needsUpdate = true;
-        L.mat.opacity = L.op * (0.9 + 0.1 * nt); L.mat.size = L.base * (1 + 0.18 * nt); L.mat.color.copy(WHITE).lerp(FLAKE_N, nt * 0.7);
+        L.mat.opacity = L.op * (0.9 + 0.1 * nt) * Math.min(1, weather.snow * 1.3); L.geo.setDrawRange(0, Math.ceil(L.n * Math.min(1, weather.snow + 0.05))); L.mat.size = L.base * (1 + 0.18 * nt); L.mat.color.copy(WHITE).lerp(FLAKE_N, nt * 0.7);
       }
+      rainMat.opacity = Math.min(0.75, weather.rain) * (0.5 + 0.4 * env.dayK); rainLines.visible = weather.rain > 0.02;
+      if (rainLines.visible) { const n = Math.ceil(RN * Math.min(1, weather.rain)); rainGeo.setDrawRange(0, n * 2); for (let i = 0; i < n; i++) { const k = i * 3; rainSeed[k + 1] -= 14 * dt; if (rainSeed[k + 1] < GY) rainSeed[k + 1] = 9; const x = rainSeed[k] + wind * 0.4, y = rainSeed[k + 1], z = rainSeed[k + 2], o = i * 6; rainPos[o] = x; rainPos[o + 1] = y; rainPos[o + 2] = z; rainPos[o + 3] = x + 0.04 * wk; rainPos[o + 4] = y - 0.55; rainPos[o + 5] = z; } rainGeo.attributes.position.needsUpdate = true; }
       for (const v of traffic) { v.c.position.x += v.lane.dir * v.v * dt; if (Math.abs(v.c.position.x) > 42) { v.c.position.x = -v.lane.dir * 40; v.v = rr(4.5, 8.5); v.c.children.forEach((m) => { if (m.material?.color && m.material === v.c.userData.body) m.material.color.setHex(palette[Math.floor(Math.random() * palette.length)]); }); } }
     },
   };

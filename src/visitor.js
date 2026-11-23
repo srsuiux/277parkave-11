@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { rBox } from './rbox.js';
 import { PLAYER } from './config.js';
+import { AVATAR } from './avatar.js';
 
 /**
  * The visitor: a fit 5'10" (1.78 m) man from Nepal, slim waist, broad shoulders. Feet are always on the floor (y = 0).
- * First person: you see your own shoes and legs; the upper body is hidden from your eyes but shows in mirrors.
- * Third person (V key, and during activities): the whole body is drawn and animated (walk, sit, toilet, shower).
+ * First person only: you see your own shoes and legs here and your torso, sleeves and hands from fpbody.js; this body
+ * (upper half hidden from your eyes) is what mirrors reflect. The third-person view was removed.
  */
 export const visitor = { upper: null, third: false };
 
@@ -14,7 +15,7 @@ const std = (c, r = 0.7) => new THREE.MeshStandardMaterial({ color: c, roughness
 export function buildVisitor() {
   const eye = PLAYER.eye;
   const group = new THREE.Group(); group.name = 'visitor';
-  const jeans = std(0x2c3445, 0.85), shoe = std(0x1b1b1d, 0.55), sole = std(0xe9e6df, 0.6), skin = std(0xb98560, 0.65), hoodie = std(0x1f4fc9, 0.9), hair = std(0x111111, 0.9);
+  const jeans = std(0x2c3445, 0.85), shoe = std(0x1b1b1d, 0.55), sole = std(0xe9e6df, 0.6), skin = std(AVATAR.skin, 0.65), hoodie = std(AVATAR.shirt, 0.9), hair = std(0x111111, 0.9);
   const cast = (m) => { m.castShadow = true; return m; };
   const part = (parent, geo, mat, x, y, z) => { const m = cast(new THREE.Mesh(geo, mat)); m.position.set(x, y, z); parent.add(m); return m; };
 
@@ -34,15 +35,15 @@ export function buildVisitor() {
   // upper body (hidden in first person): V-shaped torso, shoulders broader than the waist
   const upper = new THREE.Group(); upper.name = 'visitor-upper'; upper.visible = false; group.add(upper);
   const torso = new THREE.Group(); upper.add(torso);
-  part(torso, rBox(0.37, 0.27, 0.2, 0.07), hoodie, 0, 1.33, 0.03);       // chest + shoulders
-  part(torso, rBox(0.29, 0.26, 0.17, 0.06), hoodie, 0, 1.1, 0.03);       // waist
-  part(torso, rBox(0.31, 0.12, 0.18, 0.05), jeans, 0, 0.97, 0.03);       // hips
+  part(torso, rBox(0.32, 0.27, 0.18, 0.07), hoodie, 0, 1.33, 0.03);       // chest + shoulders
+  part(torso, rBox(0.26, 0.26, 0.16, 0.06), hoodie, 0, 1.1, 0.03);       // waist
+  part(torso, rBox(0.27, 0.12, 0.17, 0.05), jeans, 0, 0.97, 0.03);       // hips
   part(torso, new THREE.CylinderGeometry(0.045, 0.05, 0.09, 12), skin, 0, 1.5, 0.03);
   const head = part(torso, new THREE.SphereGeometry(0.1, 20, 16), skin, 0, eye, 0.03); head.scale.set(0.93, 1.12, 1.0);
   part(torso, new THREE.SphereGeometry(0.103, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair, 0, eye + 0.015, 0.025).scale.set(0.97, 1.1, 1.02);
   const arms = [];
   for (const s of [-1, 1]) {
-    const arm = new THREE.Group(); arm.position.set(s * 0.225, 1.42, 0.03); torso.add(arm);
+    const arm = new THREE.Group(); arm.position.set(s * 0.2, 1.42, 0.03); torso.add(arm);
     part(arm, new THREE.CylinderGeometry(0.043, 0.036, 0.27, 12), hoodie, 0, -0.135, 0);
     const elbow = new THREE.Group(); elbow.position.y = -0.27; arm.add(elbow);
     part(elbow, new THREE.CylinderGeometry(0.036, 0.03, 0.24, 12), hoodie, 0, -0.12, 0);

@@ -72,7 +72,7 @@ export function createDoor({ w = 0.82, h = 2.03, t = 0.14, color = 0xf1efe8, ope
       leaf.add(p);
     }
   }
-  addHinges(leaf, { w, dir }); // visible from the room side (the door opens into the room)
+  addHinges(leaf, { w, dir, face: swing < 0 ? -0.02 : 0.02 }); // hinge knuckles sit on the face the door swings toward
   if (hardware === 'entry') {
     addEntryHardware(leaf, { w, h, dir, sticker, reverse, peephole, knobColor });
   } else {

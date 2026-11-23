@@ -10,7 +10,7 @@ import { buildPhone } from './phone.js';
 const SEATS = { 'chair-north': { hip: 0.69 }, 'chair-west': { hip: 0.69 }, 'metal-chair': { hip: 0.52 }, 'orange-chair': { hip: 0.45 }, 'bedroom-sofa': { hip: 0.52, dz: 0.06 }, 'study-chair': { hip: 0.47 } };   // hip height of each chair's seat
 
 export function initActivities({ scene, camera, player, getWalls, nearestFree }) {
-  const view = { third: false };
+  const view = { third: false };   // always false: the game is first person only
   const phone = buildPhone(); scene.add(phone.group); let lastDt = 0.016;
   let act = null, since = 0, needsFlush = false, toastMsg = '', toastUntil = 0;
   const toast = (msg, secs = 2.6) => { toastMsg = msg; toastUntil = performance.now() + secs * 1000; };
@@ -36,8 +36,9 @@ export function initActivities({ scene, camera, player, getWalls, nearestFree })
     since = 0;
     const target = { ...pose }, live = { ...pose, x: player.x, z: player.z, y: 0.92 };   // walk / lower yourself onto the seat over ~0.7 s
     act = { kind, pose: live, target, k: 0, ...extra };
-    if (kind === 'toilet') { view.third = false; camera.rotation.set(-0.8, pose.yaw, 0); phone.show(true); }   // first person: look down at your knees, take the phone out
-    else { view.third = true; camera.rotation.set(-0.22, pose.yaw + Math.PI + (kind === 'sit' ? 0.6 : 0), 0); }
+    view.third = false;
+    if (kind === 'toilet') { camera.rotation.set(-0.8, pose.yaw, 0); phone.show(true); }   // look down at your knees, take the phone out
+    else camera.rotation.set(kind === 'sit' ? (extra.desk ? -0.4 : -0.2) : -0.1, kind === 'sit' ? pose.yaw : 0, 0);   // seated: facing the way the chair faces; shower: facing the wall
   }
   function sit(o) {
     if (act) return;
@@ -53,7 +54,7 @@ export function initActivities({ scene, camera, player, getWalls, nearestFree })
       const cx = Math.max(b.min.x, Math.min(hx, b.max.x)), cz = Math.max(b.min.z, Math.min(hz, b.max.z));
       if ((hx - cx) ** 2 + (hz - cz) ** 2 < 0.15 * 0.15) { toast('Not enough room to sit there - something is in the way'); return; }
     }
-    begin('sit', { kind: 'sit', x: p.x - fx * 0.03, z: p.z - fz * 0.03, y: o.userData.seat.hip, yaw: th + Math.PI }, { exit: { x: p.x + fx * 0.6, z: p.z + fz * 0.6 } });
+    begin('sit', { kind: 'sit', x: p.x - fx * 0.03, z: p.z - fz * 0.03, y: o.userData.seat.hip, yaw: th + Math.PI }, { exit: { x: p.x + fx * 0.6, z: p.z + fz * 0.6 }, desk: ['chair-north', 'chair-west', 'study-chair'].includes(o.name) });
   }
   function useToilet() {
     if (!toilet.userData.persist?.get()[0]) { toast('The lid is closed - look at it and press E to open it first'); return; }
@@ -87,7 +88,7 @@ export function initActivities({ scene, camera, player, getWalls, nearestFree })
     toastText() { return performance.now() < toastUntil ? toastMsg : null; },
     useNearby() { if (act) return; if (inStall()) useShower(); else if (nearToilet()) { if (needsFlush) toast('Flush first!'); else useToilet(); } },
     hint() {
-      if (act) return `<kbd>Y</kbd> or move to stand up &nbsp; <kbd>V</kbd> camera &nbsp;${act.kind === 'toilet' ? ' <kbd>scroll</kbd> / <kbd>Space</kbd> next video &nbsp;' : ''} <span style="opacity:.7">${act.kind === 'shower' ? 'showering' : act.kind === 'toilet' ? 'on the toilet' : 'sitting'}</span>`;
+      if (act) return `<kbd>Y</kbd> or move to stand up &nbsp; ${act.kind === 'toilet' ? ' <kbd>scroll</kbd> / <kbd>Space</kbd> next video &nbsp;' : ''} <span style="opacity:.7">${act.kind === 'shower' ? 'showering' : act.kind === 'toilet' ? 'on the toilet' : 'sitting'}</span>`;
       if (inStall()) return '<kbd>Y</kbd> take a shower';
       if (nearToilet()) return needsFlush ? '<kbd>E</kbd> flush the toilet (look at the lever)' : toilet.userData.persist?.get()[0] ? '<kbd>Y</kbd> use the toilet' : '<kbd>Y</kbd> use the toilet &nbsp; <span style="opacity:.7">(open the lid first: look at it, <kbd>E</kbd>)</span>';
       return null;

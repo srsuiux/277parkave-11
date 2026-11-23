@@ -12,9 +12,9 @@ export const KITCHEN = {
     // All doors share the entrance door's structure (5 panels, deadbolt, knob + plate, hinges).
     // sticker: the red "SEALED" sticker (entrance only) · reverse: we see the BACK of the door from here ·
     // locked: can't be opened · peephole: small viewer above the knob.
-    { id: 'north-door',   label: 'Entrance door #11 (main door)', wall: 'N', at: 1.0,  w: 0.82, h: 2.03, color: 0xf1efe8, open: 0, maxOpen: 55, hinge: 'left', hardware: 'entry', sticker: true },
+    { id: 'north-door',   label: 'Entrance door #11 (main door)', wall: 'N', at: 1.0,  w: 0.82, h: 2.03, color: 0xf1efe8, open: 0, maxOpen: 100, hinge: 'left', hardware: 'entry', sticker: true },
     { id: 'east-door',    label: 'East door - sealed hallway door (back side)', wall: 'E', at: 3.0, w: 0.82, h: 2.03, color: 0xb8bab0, open: 0, hinge: 'right', hardware: 'entry', reverse: true, locked: true },
-    { id: 'living-room-door', label: 'Bedroom door (south wall, straight ahead from the entrance)', wall: 'S', at: 0.95, w: 0.88, h: 2.03, color: 0xf1efe8, open: 0, hinge: 'right', hardware: 'entry', peephole: true },
+    { id: 'living-room-door', label: 'Bedroom door (south wall, straight ahead from the entrance)', wall: 'S', at: 0.95, w: 0.88, h: 2.03, color: 0xf1efe8, open: 0, maxOpen: 95, swing: -1, hinge: 'right', hardware: 'entry', peephole: true },
     { id: 'bathroom-door', label: 'Bathroom door (west wall, end of the counter)', knobColor: 0xeeeae0, wall: 'W', at: 3.25, w: 0.82, h: 2.03, color: 0xf1efe8, open: 0, maxOpen: 100, swing: -1, hinge: 'left', hardware: 'entry' },
   ],
   label: 'Kitchen',
@@ -70,7 +70,7 @@ export const HALLWAY = {
 export const ROOMS = [];   // (the old living-room placeholder is now the real bedroom, see BEDROOM)
 
 // First-person
-export const PLAYER = { height: 1.78, eye: 1.67, radius: 0.16, walk: 1.5, run: 3.0 };
+export const PLAYER = { height: 1.78, eye: 1.67, radius: 0.13, walk: 1.5, run: 3.0 };
 
 // Loose furniture (IMG_1288-1292). x/z = footprint centre (m), rot = degrees about the vertical axis
 // (0 faces south/+z, -90 faces west, 90 faces east, 180 faces north), y = height off the floor.

@@ -172,7 +172,7 @@ export function addEntryHardware(leaf, { w, h, dir, face = 0.02, sticker = false
 export function addHinges(leaf, { w, dir, face = 0.02 }) {
   for (const y of [0.22, 1.0, 1.84]) {
     const hg = hinge(dir); hg.name = 'hinge';
-    hg.position.set(-dir * (w / 2 - 0.004), y, face + 0.001); // hinge edge
+    hg.position.set(-dir * (w / 2 - 0.004), y, face + Math.sign(face) * 0.001); // hinge edge
     leaf.add(hg);
   }
 }
