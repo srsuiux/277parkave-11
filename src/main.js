@@ -121,7 +121,7 @@ patchShaders(ROOM_RECTS);   // per-room ambient light (see lighting.js); must ru
 
 // ---------- lighting: one connected environment. Nothing below depends on where the player is. ----------
 // Direct light: every lamp that can be seen from another room casts a real shadow map, so walls and closed doors block it and open doorways let it through.
-const lampOwner = (o) => { for (let p = o.parent; p; p = p.parent) { if (p.name === 'wall-sconce' || p.name === 'wall-heater') return null; } return roomOf(...(() => { const w = o.getWorldPosition(new THREE.Vector3()); return [w.x, w.z]; })()); };
+const lampOwner = (o) => { for (let p = o.parent; p; p = p.parent) { if (p.name === 'wall-sconce' || p.name === 'wall-heater' || p.name === 'fridge') return null; } return roomOf(...(() => { const w = o.getWorldPosition(new THREE.Vector3()); return [w.x, w.z]; })()); };
 const shadowLamps = [];
 const DOORS_OF = { kitchen: ['north-door', 'living-room-door', 'bathroom-door'], bedroom: ['living-room-door', 'closet-door'], bath: ['bathroom-door'], closet: ['closet-door'], hall: ['north-door'] };
 scene.updateMatrixWorld(true);

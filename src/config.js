@@ -36,7 +36,7 @@ export const KITCHEN = {
   // Grey shag rug in front of the counter (IMG_1284 / IMG_1279 / IMG_1277)
   rug: { x: 1.6, z: 2.15, w: 2.1, l: 3.4, rot: 0, label: 'Grey shag rug (kitchen)' },
   // Refrigerator on the EAST wall, facing the kitchen (feedback note: fridge at about z = 2.0)
-  fridge: { z: 1.89, w: 0.7, d: 0.72, h: 1.68, label: 'Refrigerator (white, top freezer)' },
+  fridge: { z: 1.89, w: 0.7, d: 0.72, h: 1.68, label: 'Refrigerator (Arctica, white, top freezer, stocked)' },
   // Light switch on the south wall above the dresser (IMG_1290)
   switch: { x: 1.72, y: 1.2 },
   wallLabels: { N: 'North wall - entrance wall', E: 'East wall - fridge side', S: 'South wall - living room side', W: 'West wall - counter side (stove, cabinets, sink)' },
