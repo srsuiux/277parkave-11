@@ -79,7 +79,7 @@ export function initDashboard({ devices, cameras, layout, renderer, scene, weath
   const sdev = (d) => d.state();
   function deviceCard(d, { details = false } = {}) {
     const c0 = d.controls[0];
-    const el = $(`<div class="cc-dev" data-dev="${d.id}"><div class="top">${svg(d.icon)}<div class="nm" tabindex="0" role="button" aria-label="Details for ${esc(d.name)}">${esc(d.name)}</div></div><div class="top"><div class="st"><i></i><span></span></div><span style="flex:1"></span><span class="ctl"></span></div>${details ? '<div class="det"></div>' : ''}</div>`);
+    const el = $(`<div class="cc-dev" data-dev="${d.id}" data-cat="${d.category}"><div class="top">${svg(d.icon)}<div class="nm" tabindex="0" role="button" aria-label="Details for ${esc(d.name)}">${esc(d.name)}</div></div><div class="top"><div class="st"><i></i><span></span></div><span style="flex:1"></span><span class="ctl"></span></div>${details ? '<div class="det"></div>' : ''}</div>`);
     const ctl = el.querySelector('.ctl'), st = el.querySelector('.st span'), det = el.querySelector('.det');
     const sw = [];
     d.controls.forEach((c, i) => {
@@ -190,7 +190,7 @@ export function initDashboard({ devices, cameras, layout, renderer, scene, weath
     const grid = $(`<div class="cc-inv"></div>`); const V = new THREE.Vector3();
     for (const o of objs.sort((a, b) => catOf(a).localeCompare(catOf(b)) || a.name.localeCompare(b.name))) {
       o.getWorldPosition(V); const dv = devices.devices.find((d) => d.object === o || (d.object && o.getObjectById(d.object.id))); const st = dv ? dv.controls.map((c) => c.text(dv.state())).join(' · ') : o.visible ? 'In place' : '—';
-      const cat = catOf(o), t = $(`<div class="cc-tile ${o.visible ? '' : 'gone'}"><div class="pic">${svg(CAT_ICON[cat])}</div><b>${esc((o.userData.label ?? o.name).replace(/ - .*$/, ''))}</b><div class="g-small g-sub">${esc(cat)}<br>${o.visible ? esc(ROOM_LABEL[roomAt(V.x, V.z)]) + ' · ' + esc(st) : 'Not in apartment'}</div><span class="cc-pill ${o.visible ? 'ok' : ''}">${o.visible ? '✓ ADDED' : '○ AVAILABLE'}</span><button class="sm ${o.visible ? '' : 'primary'}" aria-label="${o.visible ? 'Remove' : 'Add'} ${esc(o.name)}">${svg(o.visible ? 'minus' : 'plus')} ${o.visible ? 'Remove' : 'Add'}</button></div>`);
+      const cat = catOf(o), t = $(`<div class="cc-tile ${o.visible ? '' : 'gone'}" data-cat="${esc(cat)}"><div class="pic">${svg(CAT_ICON[cat])}</div><b>${esc((o.userData.label ?? o.name).replace(/ - .*$/, ''))}</b><div class="g-small g-sub">${esc(cat)}<br>${o.visible ? esc(ROOM_LABEL[roomAt(V.x, V.z)]) + ' · ' + esc(st) : 'Not in apartment'}</div><span class="cc-pill ${o.visible ? 'ok' : ''}">${o.visible ? '✓ ADDED' : '○ AVAILABLE'}</span><button class="sm ${o.visible ? '' : 'primary'}" aria-label="${o.visible ? 'Remove' : 'Add'} ${esc(o.name)}">${svg(o.visible ? 'minus' : 'plus')} ${o.visible ? 'Remove' : 'Add'}</button></div>`);
       t.querySelector('button').onclick = () => { layout.setVisible(o, !o.visible); layout.save?.(); toast(`${o.userData.label?.split(' - ')[0] ?? o.name} ${o.visible ? 'added to' : 'removed from'} the apartment. The model is kept.`); render(); };
       grid.append(t);
     }

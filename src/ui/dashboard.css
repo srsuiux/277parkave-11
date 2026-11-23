@@ -1,12 +1,12 @@
 /* Command Center: built only from the glass tokens in glass.css */
-#cc { z-index: 65; padding: 24px; }
-.cc-win { width: min(1240px, 100%); height: min(780px, 100%); display: grid !important; grid-template-columns: 210px 1fr; overflow: hidden; padding: 0 !important; border-radius: 34px !important; }
+#cc { z-index: 65; padding: 0; }
+.cc-win { width: 90vw; height: 90vh; max-width: none; display: grid !important; grid-template-columns: 210px 1fr; overflow: hidden; padding: 0 !important; border-radius: 34px !important; }
 .cc-nav { display: flex; flex-direction: column; gap: 4px; padding: 22px 14px; border-right: 1px solid var(--g-border-soft); background: rgba(255,255,255,.03); }
 .cc-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 18px; }
 .cc-brand .cc-logo { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--g-accent-fill); border: 1px solid rgba(140,180,255,.5); }
 .cc-nav button.cc-tab { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; padding: 9px 12px; border-radius: 14px; background: transparent; border-color: transparent; box-shadow: none; color: var(--g-text-2); }
 .cc-nav button.cc-tab:hover { background: rgba(255,255,255,.1); color: var(--g-text); }
-.cc-nav button.cc-tab[aria-current=page] { background: rgba(255,255,255,.88); color: #14161c; }
+.cc-nav button.cc-tab[aria-current=page] { background: var(--g-grad); color: #fff; box-shadow: 0 6px 18px rgba(80,100,255,.4); }
 .cc-nav .cc-spacer { flex: 1; }
 .cc-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .cc-head { display: flex; align-items: center; gap: 12px; padding: 20px 26px 10px; }
@@ -75,3 +75,47 @@
 .cc-hint { font-size: 12px; color: var(--g-text-3); line-height: 1.5; }
 #cc-open { left: 16px; top: 16px; z-index: 12; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 @media (max-width: 860px) { .cc-win { grid-template-columns: 64px 1fr; } .cc-nav .lbl, .cc-brand .g-head { display: none; } }
+
+/* ---------- ONE card system: every card in the dashboard shares .g-card rules (radius, padding, gradient, border, shadow, hover) ---------- */
+.cc-stat, .cc-room, .cc-dev, .cc-feed, .cc-tile, #cc details.g-glass { background: var(--g-card-fill) !important; border: 1px solid var(--g-border-soft) !important; border-radius: var(--g-r-card) !important; box-shadow: var(--g-hilite), var(--g-shadow-1) !important; -webkit-backdrop-filter: none; backdrop-filter: none; transition: transform var(--g-med) var(--g-ease), border-color var(--g-med), background var(--g-med), box-shadow var(--g-med), opacity var(--g-med); }
+.cc-stat:hover, .cc-room:hover, .cc-dev:hover, .cc-feed:hover, .cc-tile:hover { border-color: var(--g-border) !important; transform: translateY(-1px); }
+.cc-stat, .cc-room, .cc-tile, #cc details.g-glass { padding: var(--g-pad-card) !important; }
+.cc-dev { padding: 12px !important; }
+.cc-room { gap: 12px; }
+.cc-dev.on { background: linear-gradient(150deg, rgba(139,92,246,.42), rgba(59,130,246,.3) 55%, rgba(34,211,238,.26)), var(--g-card-fill) !important; border-color: rgba(190,210,255,.5) !important; box-shadow: var(--g-hilite), 0 6px 22px rgba(70,110,255,.25) !important; }
+.cc-stat { position: relative; overflow: hidden; }
+.cc-stat::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--g-grad); }
+.cc-stat:nth-child(2)::before { background: var(--g-grad-ok); } .cc-stat:nth-child(3)::before { background: var(--g-grad-warm); } .cc-stat:nth-child(4)::before { background: var(--g-grad-hot); } .cc-stat:nth-child(5)::before { background: var(--g-grad-cool); }
+.cc-stat b { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
+.cc-stat .cc-ico { stroke: #fff; }
+/* icon chips: gradient per category */
+.cc-dev > .top > .cc-ico, .cc-room header > .cc-ico, .cc-sec > h3 .cc-ico { box-sizing: content-box; padding: 6px; border-radius: 10px; background: var(--g-grad-cool); stroke: #fff; width: 16px; height: 16px; }
+.cc-dev[data-cat=lighting] > .top > .cc-ico { background: var(--g-grad-warm); }
+.cc-dev[data-cat=climate] > .top > .cc-ico { background: var(--g-grad-hot); }
+.cc-dev[data-cat=plumbing] > .top > .cc-ico { background: var(--g-grad-ok); }
+.cc-dev[data-cat=openings] > .top > .cc-ico { background: var(--g-grad); }
+.cc-dev[data-cat=electronics] > .top > .cc-ico { background: var(--g-grad-cool); }
+.cc-dev:not(.on) > .top > .cc-ico { filter: saturate(.55) opacity(.8); }
+.cc-room header > .cc-ico { background: var(--g-grad); }
+.cc-sec > h3 .cc-ico { padding: 4px; border-radius: 8px; width: 14px; height: 14px; background: var(--g-grad); }
+.cc-tile .pic { background: var(--g-grad-cool); border-radius: 14px; }
+.cc-tile[data-cat="Kitchen appliances"] .pic { background: var(--g-grad-hot); }
+.cc-tile[data-cat="Bathroom fixtures"] .pic { background: var(--g-grad-ok); }
+.cc-tile[data-cat="Electronics"] .pic { background: var(--g-grad); }
+.cc-tile[data-cat="Furniture"] .pic { background: var(--g-grad-warm); }
+.cc-tile .pic .cc-ico { stroke: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+.cc-sw[aria-pressed=true] { background: var(--g-grad); border-color: rgba(190,210,255,.7); }
+.cc-pill.ok { background: linear-gradient(135deg, rgba(52,211,153,.35), rgba(34,211,238,.3)); border-color: rgba(120,230,200,.45); color: #fff; }
+.cc-feed .view { background: rgba(0,0,0,.25); }
+.cc-feed .badge { background: rgba(20,24,40,.45); }
+.cc-head, .cc-nav { background: transparent; }
+.cc-nav { background: linear-gradient(180deg, rgba(139,92,246,.12), rgba(34,211,238,.06)); }
+.cc-brand .cc-logo { background: var(--g-grad); border-color: rgba(190,210,255,.5); }
+.cc-big { background: rgba(10,12,24,.72); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+.cc-big .view { background: rgba(0,0,0,.35); }
+#cc-open { background: var(--g-fill), var(--g-tint); }
+@media (max-width: 860px) { .cc-win { width: 96vw; height: 94vh; grid-template-columns: 64px 1fr; } .cc-rooms { grid-template-columns: 1fr; } .cc-body, .cc-head { padding-left: 14px; padding-right: 14px; } }
+@media (max-height: 560px) { .cc-win { height: 96vh; } }
+
+.cc-win { --g-tint-strong: rgba(14,16,32,.34); }
+.cc-hint, .cc-sec > h3, .cc-dev .st, .g-sub { text-shadow: 0 1px 6px rgba(0,0,0,.3); }

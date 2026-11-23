@@ -4,10 +4,10 @@
    ============================================================================================ */
 :root {
   /* surface */
-  --g-fill: linear-gradient(155deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 55%, rgba(255,255,255,.09));
-  --g-tint: rgba(24,27,36,.34);               /* darkens the glass a touch so text stays readable on bright rooms */
-  --g-tint-strong: rgba(18,20,28,.52);        /* modals / dense panels */
-  --g-blur: 26px; --g-blur-strong: 38px; --g-sat: 1.7;
+  --g-fill: radial-gradient(120% 90% at 0% 0%, rgba(124,92,255,.22), transparent 55%), radial-gradient(110% 90% at 100% 100%, rgba(34,211,238,.18), transparent 55%), linear-gradient(155deg, rgba(255,255,255,.2), rgba(255,255,255,.04) 55%, rgba(255,255,255,.1));
+  --g-tint: rgba(18,20,34,.16);               /* darkens the glass a touch so text stays readable on bright rooms */
+  --g-tint-strong: rgba(16,18,32,.3);        /* modals / dense panels */
+  --g-blur: 28px; --g-blur-strong: 40px; --g-sat: 1.9;
   --g-border: rgba(255,255,255,.2);
   --g-border-soft: rgba(255,255,255,.1);
   --g-hilite: inset 0 1px 0 rgba(255,255,255,.34), inset 0 -1px 0 rgba(255,255,255,.05);
@@ -18,7 +18,9 @@
   /* type */
   --g-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
   --g-text: rgba(255,255,255,.94); --g-text-2: rgba(255,255,255,.64); --g-text-3: rgba(255,255,255,.42);
-  --g-accent: #6aa8ff; --g-accent-fill: rgba(70,130,255,.55); --g-ok: #7be0a4; --g-warn: #ffc56b; --g-bad: #ff8d8d;
+  --g-accent: #7fb2ff; --g-accent-fill: linear-gradient(135deg, rgba(139,92,246,.75), rgba(59,130,246,.75) 60%, rgba(34,211,238,.7));
+  --g-grad: linear-gradient(135deg, #8b5cf6, #3b82f6 55%, #22d3ee); --g-grad-warm: linear-gradient(135deg, #ff6fae, #ffa94d); --g-grad-ok: linear-gradient(135deg, #34d399, #22d3ee); --g-grad-hot: linear-gradient(135deg, #fb7185, #f59e0b); --g-grad-cool: linear-gradient(135deg, #60a5fa, #a78bfa);
+  --g-card-fill: linear-gradient(150deg, rgba(255,255,255,.16), rgba(255,255,255,.04) 60%), rgba(255,255,255,.03); --g-r-card: 20px; --g-pad-card: 14px; --g-ok: #7be0a4; --g-warn: #ffc56b; --g-bad: #ff8d8d;
   /* spacing + motion */
   --g-s1: 4px; --g-s2: 8px; --g-s3: 12px; --g-s4: 16px; --g-s5: 24px;
   --g-ease: cubic-bezier(.2,.8,.2,1); --g-fast: .14s; --g-med: .26s; --g-slow: .42s;
@@ -45,7 +47,7 @@ html, body { font-family: var(--g-font); color: var(--g-text); -webkit-font-smoo
 
 .g-scrim {
   position: fixed; inset: 0; z-index: 60; display: none; place-items: center; font: 13px/1.5 var(--g-font); color: var(--g-text);
-  background: radial-gradient(ellipse at 50% 40%, rgba(10,12,20,.18), rgba(5,6,12,.5));
+  background: radial-gradient(ellipse at 50% 40%, rgba(40,30,90,.08), rgba(5,6,16,.32));
   -webkit-backdrop-filter: blur(6px) saturate(1.2); backdrop-filter: blur(6px) saturate(1.2);
   animation: g-fade var(--g-med) ease both;
 }
@@ -81,7 +83,7 @@ html, body { font-family: var(--g-font); color: var(--g-text); -webkit-font-smoo
 .g-glass button:active, .g-scrim button:active, .g-btn:active { transform: scale(.96); background: rgba(255,255,255,.28); }
 .g-glass button:focus-visible, .g-scrim button:focus-visible, .g-glass input:focus-visible, .g-glass select:focus-visible, .g-glass textarea:focus-visible,
 .g-scrim input:focus-visible { outline: 2px solid var(--g-accent); outline-offset: 2px; }
-.g-glass button.primary, .g-scrim button.primary { background: var(--g-accent-fill); border-color: rgba(140,180,255,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px rgba(60,110,255,.3); }
+.g-glass button.primary, .g-scrim button.primary { background: var(--g-accent-fill); border-color: rgba(170,200,255,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px rgba(60,110,255,.3); }
 .g-glass button.primary:hover, .g-scrim button.primary:hover { background: rgba(90,150,255,.7); }
 .g-glass button.danger:hover, .g-scrim button.danger:hover { background: rgba(255,90,90,.4); }
 .g-glass button.sm, .g-scrim button.sm { padding: 3px 10px; font-size: 11.5px; }
@@ -117,9 +119,10 @@ html, body { font-family: var(--g-font); color: var(--g-text); -webkit-font-smoo
 /* list rows (object sidebar, notes) */
 .g-item { display: flex; align-items: center; gap: var(--g-s2); padding: 6px 10px; border-radius: var(--g-r-sm); cursor: pointer; transition: background var(--g-fast); }
 .g-item:hover { background: rgba(255,255,255,.1); }
-.g-item.on { background: rgba(110,160,255,.28); box-shadow: inset 0 0 0 1px rgba(140,180,255,.4); }
+.g-item.on { background: linear-gradient(135deg, rgba(139,92,246,.4), rgba(59,130,246,.3)); box-shadow: inset 0 0 0 1px rgba(140,180,255,.4); }
 .g-item.off { opacity: .45; }
-.g-card { background: rgba(255,255,255,.07); border: 1px solid var(--g-border-soft); border-radius: var(--g-r-sm); padding: var(--g-s2) var(--g-s3); }
+.g-card { background: var(--g-card-fill); border: 1px solid var(--g-border-soft); border-radius: var(--g-r-card); padding: var(--g-pad-card); box-shadow: var(--g-hilite), var(--g-shadow-1); transition: transform var(--g-med) var(--g-ease), border-color var(--g-med), background var(--g-med), box-shadow var(--g-med); }
+.g-card:hover { border-color: var(--g-border); transform: translateY(-1px); box-shadow: var(--g-hilite), 0 10px 26px rgba(0,0,0,.28); }
 
 /* tooltips */
 .g-tip { position: fixed; pointer-events: none; z-index: 70; font: 12px var(--g-font); color: var(--g-text); padding: 5px 11px; border-radius: var(--g-r-pill);
