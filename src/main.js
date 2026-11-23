@@ -12,6 +12,8 @@ import { buildHallway } from './shell/hallway.js';
 import { buildRooms } from './shell/rooms.js';
 import { buildBathroom } from './shell/bathroom.js';
 import { buildBedroom, bedroomState, closetState } from './shell/bedroom.js';
+import { bathState } from './shell/bathroom.js';
+import { patchShaders, solveAmbient, roomAmbient, AMBIENT_REF } from './lighting.js';
 import { paintUI, openPaint } from './paint.js';
 import { makeWallsPaintable } from './wallpaint.js';
 import { initFeedback } from './feedback.js';
@@ -34,7 +36,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.shadowMap.autoUpdate = false;   // the shadow map is re-rendered every 3rd frame (see the frame loop): the scene is mostly static
+renderer.shadowMap.autoUpdate = true;   // per-light control: see updateLighting()
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 document.body.appendChild(renderer.domElement);
@@ -111,23 +113,50 @@ const ROOM_RECTS = {
 };
 const roomOf = (x, z) => Object.keys(ROOM_RECTS).find((k) => { const r = ROOM_RECTS[k]; return x >= r[0] - 0.05 && x <= r[1] + 0.05 && z >= r[2] - 0.05 && z <= r[3] + 0.05; }) ?? null;
 const LINKS = [['kitchen', 'bedroom', 'living-room-door'], ['kitchen', 'bath', 'bathroom-door'], ['bedroom', 'closet', 'closet-door'], ['kitchen', 'hall', 'north-door']];
-const gated = [];
+patchShaders(ROOM_RECTS);   // per-room ambient light (see lighting.js); must run before the first material compiles
+
+// ---------- lighting: one connected environment. Nothing below depends on where the player is. ----------
+// Direct light: every lamp that can be seen from another room casts a real shadow map, so walls and closed doors block it and open doorways let it through.
+const lampOwner = (o) => { for (let p = o.parent; p; p = p.parent) { if (p.name === 'wall-sconce' || p.name === 'wall-heater') return null; } return roomOf(...(() => { const w = o.getWorldPosition(new THREE.Vector3()); return [w.x, w.z]; })()); };
+const shadowLamps = [];
+const DOORS_OF = { kitchen: ['north-door', 'living-room-door', 'bathroom-door'], bedroom: ['living-room-door', 'closet-door'], bath: ['bathroom-door'], closet: ['closet-door'], hall: ['north-door'] };
 scene.updateMatrixWorld(true);
-scene.traverse((o) => { if (o.isPointLight || o.isSpotLight) { const w = o.getWorldPosition(new THREE.Vector3()); const room = roomOf(w.x, w.z); if (room) gated.push({ light: o, room, f: 1, raw: o.intensity, last: o.intensity }); } });
-function applyRoomLights(dt) {
-  const here = roomOf(player.x, player.z);
-  for (const g of gated) {
-    let f = 1;
-    if (here && g.room !== here) {
-      f = 0;
-      const link = LINKS.find(([a, b]) => (a === here && b === g.room) || (b === here && a === g.room));
-      const d = link && doors.find((dd) => dd.name === link[2]);
-      if (d && d.userData.angle > 2) f = 0.12 + 0.5 * Math.min(1, d.userData.angle / 45);
-    }
-    g.f += (f - g.f) * Math.min(1, dt * 7);
-    if (g.light.intensity !== g.last) g.raw = g.light.intensity;   // the fixture updated itself this frame
-    g.last = g.light.intensity = g.raw * (g.f < 0.002 ? 0 : g.f);
+scene.traverse((o) => { if (o.isMesh && o.castShadow) { for (let p = o.parent; p; p = p.parent) if (p.userData.noShadow) { o.castShadow = false; break; } } });   // (spinning fan blades would need a shadow re-render every frame)
+scene.traverse((o) => {
+  if (!o.isPointLight) return;
+  const room = lampOwner(o);
+  if (o.parent === scene) { /* hallway lamp */ }
+  if (!room) { o.distance = Math.max(o.distance, 0) || 2.6; return; }          // small fixtures (wall sconce): short range, no shadow map
+  o.castShadow = true; o.shadow.autoUpdate = false; o.shadow.needsUpdate = true;
+  o.shadow.mapSize.set(1024, 1024); o.shadow.bias = -0.0006; o.shadow.normalBias = 0.025; o.shadow.radius = 3; o.shadow.camera.near = 0.05;
+  shadowLamps.push({ light: o, room, sig: NaN });
+});
+sun.shadow.autoUpdate = false;
+renderer.shadowMap.autoUpdate = true;      // (each light decides for itself through shadow.needsUpdate)
+let shadowDirtyAll = true, lightFrame = 0;
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const doorOpen = (name) => { const d = doors.find((dd) => dd.name === name); return d ? sstep(2, 40, d.userData.angle) : 0; };
+const LINK_DEFS = [['kitchen', 'bedroom', 'living-room-door'], ['kitchen', 'bath', 'bathroom-door'], ['bedroom', 'closet', 'closet-door'], ['kitchen', 'hall', 'north-door']];
+function updateLighting() {
+  lightFrame++;
+  // ambient / indirect light per room, from the real state of lamps, windows and doors
+  solveAmbient({
+    dayAmb: dayEnv.dayAmb, skyColor: dayEnv.ambSky,
+    lamp: { kitchen: lightState.level, bedroom: bedroomState.level, closet: closetState.level, bath: bathState.level * 0.9, hall: 0.45 },
+    window: { bedroom: 0.04 + 0.96 * bedroomState.curtain, bath: 1, hall: 1 },
+    links: LINK_DEFS.map(([a, b, d]) => [a, b, doorOpen(d)]),
+  });
+  hemi.intensity = AMBIENT_REF; hemi.color.set(0xfff2de); hemi.groundColor.set(0x4a3a2a); scene.environmentIntensity = AMBIENT_REF * 0.7;
+  // shadow maps are only re-rendered when something that can change them has moved (cheap: the apartment is mostly static)
+  if (lightFrame % 3 === 0) sun.shadow.needsUpdate = true;
+  for (const s of shadowLamps) {
+    let sig = Math.round(s.light.visible ? 1 : 0);
+    for (const n of DOORS_OF[s.room] ?? []) { const d = doors.find((dd) => dd.name === n); if (d) sig += Math.round(d.userData.angle) * 7; }
+    if (s.room === 'bedroom') sig += Math.round(bedroomState.curtain * 20) * 131;
+    if (sig !== s.sig) { s.sig = sig; s.pending = true; }
+    if (shadowDirtyAll || (s.pending && lightFrame % 3 === 0) || lightFrame % 180 === 0) { s.light.shadow.needsUpdate = true; s.pending = false; }
   }
+  shadowDirtyAll = false;
 }
 
 // ---------- activities (sit / toilet / shower, third-person camera) ----------
@@ -255,7 +284,7 @@ function updateHud(dt) { hudT -= dt; if (hudT > 0) return; hudT = 1; hud.innerHT
 const layout = initLayout({
   scene, camera, renderer, roots: [kitchen, bathroom, bedroom], fb, wallPaints,
   extraObstacles: () => doorSwingBoxes(),
-  onChange: rebuildColliders,
+  onChange: () => { rebuildColliders(); shadowDirtyAll = true; },
   onEnter: () => { if (controls.isLocked) controls.unlock(); startEl.style.display = 'none'; },
   onExit: () => { startEl.style.display = 'grid'; },
 });
@@ -513,13 +542,10 @@ function step(dt) {
     if (Math.abs(u.target - u.angle) < 0.1) u.angle = u.target;
     u.pivot.rotation.y = u.swing * u.dir * -THREE.MathUtils.degToRad(u.angle);
   }
-  updateDay(); updateHud(dt); if ((shadowTick = (shadowTick + 1) % 3) === 0) renderer.shadowMap.needsUpdate = true;
+  updateDay(); updateHud(dt); 
   for (const o of updaters) o.userData.update(dt, { camera });
-  { const inBed = player.z > 4.1 && camera.position.x > -1.4; const inCloset = inBed && camera.position.x > 3.27; const want = inCloset ? closetState.level : inBed ? bedroomState.level : kitchenLevel; ambLevel += (want - ambLevel) * Math.min(1, dt * 6); const l = ambLevel < 0.003 ? 0 : ambLevel; const win = { bedroom: 0.55, bath: 0.3, closet: 0.06, hall: 0.1, kitchen: 0.08 }[roomOf(player.x, player.z)] ?? 0.1, dl = dayEnv.dayAmb * win;   // daylight reaching this room's ambient light
-    hemi.color.copy(dayEnv.ambSky); hemi.groundColor.copy(dayEnv.ambGround);
-    hemi.intensity = 0.06 + 0.29 * l + 0.5 * dl; scene.environmentIntensity = 0.05 + 0.2 * l + 0.3 * dl; }
-  setDarkness(1 - Math.min(1, ambLevel * 1.6));   // light-switch plates glow faintly in a dark room
-  applyRoomLights(dt);
+  { const ri = ['kitchen', 'bath', 'bedroom', 'closet', 'hall'].indexOf(roomOf(player.x, player.z)), a = ri < 0 ? roomAmbient[5] : roomAmbient[ri]; setDarkness(1 - Math.min(1, (a.x + a.y + a.z) / 3 * 0.8)); }   // light-switch plates glow faintly in a dark room
+  updateLighting();
   const looked = fb.state.edit || layout.state.on ? null : lookedAt(); lookedNow = looked && looked.point && looked.point.distanceTo(camera.position) < 1.6 ? looked : null;
   const ah = fb.state.edit || layout.state.on ? null : activities.toastText() ?? activities.hint();
   if (ah && !looked?.item) { promptEl.innerHTML = ah; promptEl.style.opacity = 1; }

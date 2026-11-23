@@ -77,6 +77,7 @@ const porcelain = () => std(0xf4f3ee, 0.14);
 const brass = () => std(0x8a6a35, 0.35, 0.85);
 const chrome = () => fixtureMats().chrome;
 
+export const bathState = { level: 1 };   // sconce power 0..1 (read by the lighting solver)
 export function buildBathroom(mats) {
   const root = new THREE.Group(); root.name = 'bathroom'; root.userData.label = B.label;
   const { x0, x1, z0, z1, height: H, wallT: t, wainscot: WH } = B;
@@ -120,7 +121,6 @@ export function buildBathroom(mats) {
   const ceil = box(x1 - x0 + 2 * t, 0.08, z1 - z0 + 2 * t, ceilMat); ceil.position.set((x0 + x1) / 2, H + 0.04, (z0 + z1) / 2); ceil.name = 'ceiling'; root.add(ceil);
 
   root.add(stall(), ...bathObjects(), sconce(), ...buildBathRugs(B));
-  for (const z of [z0 + (z1 - z0) * 0.25, z0 + (z1 - z0) * 0.75]) { const fill = new THREE.PointLight(0xffe6c4, 2.2, 0, 2); fill.position.set((x0 + x1) / 2, H - 0.25, z); root.add(fill); }
   return root;
 
   // ---------- helpers (closures over the room) ----------
@@ -387,7 +387,7 @@ export function buildBathroom(mats) {
         if (before < 0.12 && st.u >= 0.12 || before > 0.04 && st.u <= 0.04) click(before < st.u ? 1100 : 1500, 0.06);
         pose();
       }
-      st.power += ((st.u < 0.12 ? 1 : 0) - st.power) * Math.min(1, dt * 20);   // contact is made only while the prongs are in the slots
+      st.power += ((st.u < 0.12 ? 1 : 0) - st.power) * Math.min(1, dt * 20); bathState.level = st.power;   // contact is made only while the prongs are in the slots
     };
     g.userData.persist = undefined;
     g.rotation.y = Math.PI; g.position.set(-0.72, 1.52, z1 - 0.002);

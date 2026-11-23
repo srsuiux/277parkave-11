@@ -283,7 +283,7 @@ export function buildBedroom(mats) {
     const g = new THREE.Group(), metal = std(0xcfcac0, 0.4, 0.5), blade = wood('#9a7a52', '#4a3018'), glass = new THREE.MeshStandardMaterial({ color: 0xfff3da, emissive: 0xffd9a0, emissiveIntensity: 0, roughness: 0.2, transparent: true, opacity: 0.92 });
     cyl(g, 0.02, 0.02, 0.2, metal, 'fan-downrod', 0, -0.1, 0, null, 10); cyl(g, 0.1, 0.12, 0.1, metal, 'fan-motor', 0, -0.25, 0, null, 24); cyl(g, 0.12, 0.12, 0.02, metal, 'fan-canopy', 0, -0.01, 0, null, 24);
     const blades = new THREE.Group(); blades.position.y = -0.27; g.add(blades);
-    for (let k = 0; k < 4; k++) { const a = new THREE.Group(); a.rotation.y = k * Math.PI / 2; blades.add(a); bx(a, 0.46, 0.012, 0.13, blade, 'fan-blade', 0.36, 0, 0); bx(a, 0.1, 0.02, 0.03, metal, 'blade-arm', 0.14, 0, 0); }
+    for (let k = 0; k < 4; k++) { const a = new THREE.Group(); a.rotation.y = k * Math.PI / 2; blades.add(a); a.userData.noShadow = true; bx(a, 0.46, 0.012, 0.13, blade, 'fan-blade', 0.36, 0, 0); bx(a, 0.1, 0.02, 0.03, metal, 'blade-arm', 0.14, 0, 0); }
     cyl(g, 0.07, 0.08, 0.08, metal, 'light-kit', 0, -0.35, 0, null, 20);
     const bulbs = [];
     for (let k = 0; k < 3; k++) { const a = k * Math.PI * 2 / 3 + 0.5; const arm = bx(g, 0.1, 0.012, 0.012, metal, 'bulb-arm', Math.cos(a) * 0.1, -0.36, Math.sin(a) * 0.1); arm.rotation.y = -a; const b = mk(g, new THREE.SphereGeometry(0.038, 14, 12), glass, 'fan-bulb', Math.cos(a) * 0.17, -0.4, Math.sin(a) * 0.17); b.castShadow = false; bulbs.push(b); }
