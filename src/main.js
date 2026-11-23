@@ -433,4 +433,14 @@ renderer.setAnimationLoop(() => {
 });
 
 // debug hook for testing
-window.__fp = { activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };
+/** Save a screenshot of the current view to docs/screenshots/<name>.jpg (dev server only). Press P, or call __fp.snapshot('name'). */
+async function snapshot(name = 'snapshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)) {
+  if (window.__ao.enabled) composer.render(); else renderer.render(scene, camera);
+  const src = renderer.domElement, w = Math.min(1600, src.width), c = document.createElement('canvas'); c.width = w; c.height = Math.round((src.height * w) / src.width);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  const r = await fetch('/__snapshot', { method: 'POST', body: JSON.stringify({ name, image: c.toDataURL('image/jpeg', 0.88) }) });
+  const j = await r.json(); activities.toast(j.ok ? 'Saved ' + j.file : 'Snapshot failed', 2.2); return j.file;
+}
+addEventListener('keydown', (e) => { if (e.code === 'KeyP' && !e.repeat && !fb.isTyping(e) && !paintUI.open && !layout.state.on) snapshot(); });
+
+window.__fp = { snapshot, activities, blocked, clearAngle, doorSwingBoxes, layout, lookedAt, interactives, updaters, fb, player, camera, doors, walls, teleport(x, z, yaw = 0) { player.x = x; player.z = z; camera.rotation.y = yaw; } };

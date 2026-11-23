@@ -7,6 +7,16 @@ outside the entrance, and a winter street + park outside the bedroom window.
 Every object is its own labelled, draggable, resizable asset, and you can paint the walls. Things work like a small game:
 sit on chairs, use the toilet (lid up, flush, lock the door), take a shower, switch lights / fan / AC, open doors and curtains.
 
+## Preview
+
+| Kitchen | Bedroom |
+| --- | --- |
+| ![Kitchen, looking towards the bedroom door](docs/screenshots/01-kitchen.jpg) | ![Bedroom with the heater, pipes, fan and open wardrobe](docs/screenshots/02-bedroom.jpg) |
+| **Bathroom** | **Wardrobe** |
+| ![Bathroom with granite vanity and arched window](docs/screenshots/03-bathroom.jpg) | ![Walk-in wardrobe](docs/screenshots/04-wardrobe.jpg) |
+
+![Winter night outside the bedroom window: snowfall, road with cars, street lamps and a snowy park](docs/screenshots/05-window-winter-night.jpg)
+
 ## Run it
 
 ```bash
@@ -29,6 +39,7 @@ Units are metres: `x` = east, `y` = up, `z` = south. Dimensions are estimates fr
 | `R` | bathroom rug on / off |
 | `L` | **Layout mode** — drag, rotate and resize objects |
 | `F` | **Feedback mode** — leave notes pinned to what you see |
+| `P` | save a screenshot of the current view to `docs/screenshots/` (dev server only) |
 | `Esc` | release the mouse |
 
 ## Project layout
@@ -41,6 +52,7 @@ src/fixtures/          sink, toilet, stove, fridge, lights, rugs, power outlets�
 src/layout.js          Layout mode (drag / resize / save positions)
 src/paint.js           colour modal;  src/wallpaint.js  paintable walls
 src/feedback.js        Feedback mode
+docs/screenshots/      preview images used by this README
 src/activity.js        sit / toilet / shower + third-person camera
 layout.json            saved positions, sizes and colours (written by Layout mode)
 layout-backups/        automatic copy of the previous layout on every save
@@ -71,6 +83,15 @@ Feedback mode is how I review the build while developing: instead of describing 
 
 Details are in `feedback/README.md`. Like layout saving, this needs the dev server (`npm run dev`) — it's a development tool,
 not part of a production build.
+
+## Updating the screenshots in this README
+
+The images above are real captures of the running preview, saved by the dev server (`snapshotSink` in `vite.config.js`):
+
+- Press **`P`** while walking around to save the current view as `docs/screenshots/snapshot-<timestamp>.jpg`.
+- Or from the browser console: `__fp.snapshot('my-name')` saves `docs/screenshots/my-name.jpg` (use `__fp.teleport(x, z, yaw)` first to
+  position the camera). The README's images were taken this way, one call per room.
+- Then point the `![…](docs/screenshots/…)` lines in this README at the new files, commit and push.
 
 ## Tech
 

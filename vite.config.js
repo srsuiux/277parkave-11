@@ -66,4 +66,29 @@ function layoutSink() {
   };
 }
 
-export default defineConfig({ plugins: [feedbackSink(), layoutSink()] });
+// Dev-only: press P in the preview (or call window.__fp.snapshot(name)) to save a screenshot into ./docs/screenshots/
+function snapshotSink() {
+  return {
+    name: 'snapshot-sink',
+    configureServer(server) {
+      server.middlewares.use('/__snapshot', (req, res) => {
+        res.setHeader('content-type', 'application/json');
+        if (req.method !== 'POST') { res.statusCode = 405; return res.end('{"ok":false}'); }
+        let body = '';
+        req.on('data', (c) => { body += c; });
+        req.on('end', () => {
+          try {
+            const { name, image } = JSON.parse(body);
+            if (typeof image !== 'string' || !image.startsWith('data:image/jpeg;base64,')) throw new Error('expected a jpeg data URL');
+            const safe = String(name || 'snapshot').replace(/[^a-z0-9._-]/gi, '-').slice(0, 60);
+            const dir = path.resolve(server.config.root, 'docs', 'screenshots'); fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(path.join(dir, `${safe}.jpg`), Buffer.from(image.split(',')[1], 'base64'));
+            res.end(JSON.stringify({ ok: true, file: `docs/screenshots/${safe}.jpg` }));
+          } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ ok: false, error: String(e) })); }
+        });
+      });
+    },
+  };
+}
+
+export default defineConfig({ plugins: [feedbackSink(), layoutSink(), snapshotSink()] });
